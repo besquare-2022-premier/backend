@@ -1,6 +1,6 @@
-# Backend Template
+# Backend
 
-This repository serves as a template repository for all ExpressJS based backend project.
+This repository contains the real production backend implementation
 
 ## Structure
 
@@ -9,3 +9,12 @@ This repository serves as a template repository for all ExpressJS based backend 
 | `src`     | The source code   |
 | `test`    | The test suite    |
 | `.github` | CI related stuffs |
+
+## Modules
+
+| Modules          | Description                     |
+| ---------------- | ------------------------------- |
+| `models`         | The database models             |
+| `database`       | The database connection related |
+| `authentication` | Authentication related code     |
+| `endpoints`      | API Endpoints                   |

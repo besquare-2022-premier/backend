@@ -12,7 +12,7 @@ class CSRFTokenInfo {
   constructor(owner, type) {
     this.owner = owner;
     this.type = type;
-    this.expiry = Date.now() + (owner === "test") ? 1000 : 600000;
+    this.expiry = Date.now() + (owner === "test" ? 1000 : 600000);
   }
   get isValid() {
     return this.expiry >= Date.now();

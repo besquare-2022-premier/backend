@@ -28,6 +28,30 @@ class IDatabase {
   //    USERS
   /////////////////////////////////////////////////////////////
   /**
+   * Add a verification code for email
+   * @param {string} email
+   * @param {string} code
+   * @returns {Promise<boolean>}
+   */
+  async addVerificationCode(email, code) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Verify and get the email address associated to it
+   * @param {string} code
+   * @returns {Promise<string|null>}
+   */
+  async verifyVerificationCode(code) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * @param {string} code
+   * @returns {Promise<void>}
+   */
+  async voidVerificationCode(code) {
+    throw new Error("Unimplemented");
+  }
+  /**
    * Request the password hash of the given user email
    * @param {string} email
    * @returns {Promise<{loginid:number,hash:string}|null>}

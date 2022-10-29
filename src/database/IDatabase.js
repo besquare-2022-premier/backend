@@ -1,9 +1,10 @@
+const Order = require("../models/order");
+const Transaction = require("../models/transaction");
+const User = require("../models/user");
+
 /**
  * Interface for the database adapter to the rest of the application
  */
-
-const User = require("../models/user");
-
 class IDatabase {
   constructor() {}
   /////////////////////////////////////////////////////////////
@@ -35,11 +36,27 @@ class IDatabase {
     throw new Error("Unimplemented");
   }
   /**
+   * Create an user in the database
+   * @param {User} user user to create, the final user id is returned in the object
+   * @returns {boolean}
+   */
+  async addUser(user) {
+    throw new Error("Unimplemented");
+  }
+  /**
    * Get the user information given the id
    * @param {number} loginid
    * @returns {Promise<User|null>}
    */
   async getUser(loginid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * A function for the database to apply the update without needing to compare the values
+   * @param {number} loginid
+   * @param {{[key:any]:any}} changes
+   */
+  async updateUserSubtle(loginid, changes) {
     throw new Error("Unimplemented");
   }
   /**
@@ -105,7 +122,80 @@ class IDatabase {
   ) {
     throw new Error("Unimplemented");
   }
-  ///TODO: add transaction and models
+  /////////////////////////////////////////////////////////////
+  //    ORDERS
+  /////////////////////////////////////////////////////////////
+  /**
+   * Get the orders of the user, the order details are not expanded in this call
+   * @param {number} loginid
+   * @returns {Promise<Order[]>}
+   */
+  async getOrdersOfUser(loginid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the specific of the user, the order details are expanded in this call
+   * @param {number} loginid
+   * @param {number} orderid
+   * @returns {Promise<Order[]>}
+   */
+  async getUserOrder(loginid, orderid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Attempt to expand the order details. Not meant to be used directly
+   * @param {Order} order
+   * @returns {boolean}
+   */
+  async _expandOrderDetails(order) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get current cart of user, details are expanded in this call
+   * @param {number} loginid
+   * @returns {Promise<Order>}
+   */
+  async getUserCart(loginid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * A function for the database to apply the update without needing to compare the values
+   * @param {number} orderid
+   * @param {{[key:any]:any}} changes
+   */
+  async updateOrderSubtle(orderid, changes) {
+    throw new Error("Unimplemented");
+  }
+  /////////////////////////////////////////////////////////////
+  //    TRANSACTION
+  /////////////////////////////////////////////////////////////
+  /**
+   * Add a new transaction into the database
+   * @param {Transaction} tx
+   */
+  async addTransaction(tx) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the specified transaction
+   * @param {number} loginid
+   * @param {number} txid
+   * @returns {Promise<Transaction|null>}
+   */
+  async getTransaction(loginid, txid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * A function for the database to apply the update without needing to compare the values
+   * @param {number} txid
+   * @param {{[key:any]:any}} changes
+   */
+  async updateTransactionSubtle(txid, changes) {
+    throw new Error("Unimplemented");
+  }
 }
-
+/**
+ * Field that is removed
+ */
+IDatabase.DELETED = Symbol("DELETED");
 module.exports = IDatabase;

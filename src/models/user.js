@@ -13,6 +13,8 @@ class User {
    * @param {Date} first_join
    * @param {"normal"|"admin"} access_level
    * @param {string?} residence
+   * @param {Date} birthday
+   * @param {"unknown"|"male"|"female"} gender
    */
   constructor(
     loginid,
@@ -23,7 +25,9 @@ class User {
     tel_no,
     first_join,
     access_level,
-    residence
+    residence,
+    birthday,
+    gender
   ) {
     this.loginid = loginid;
     this.firstname = firstname;
@@ -34,6 +38,8 @@ class User {
     this.first_join = first_join;
     this.access_level = access_level;
     this.residence = residence;
+    this.birthday = birthday;
+    this.gender = gender;
   }
 }
 

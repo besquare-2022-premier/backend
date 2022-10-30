@@ -1,0 +1,43 @@
+const { UNPROCESSABLE_ENTITY } = require("../types/error_codes");
+
+/**
+ * A simple wrapper around promise function so the exception do not kill the server
+ * @param {import("express").RequestHandler} handler
+ */
+function asyncExpressHandler(handler) {
+  return function (req, res, next) {
+    //call the function and pass the exception to the next
+    handler(req, res, next)?.catch?.(next);
+  };
+}
+/**
+ * assert the request is a json request, this function will terminate the processing
+ * of the request when it is not
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @returns {boolean} should the endpoint process the request
+ */
+function assertJsonRequest(req, res) {
+  if (!req.is("json")) {
+    res
+      .status(400)
+      .json(
+        new ResponseBase(
+          UNPROCESSABLE_ENTITY,
+          "Cannot process the request, not a JSON payload!"
+        )
+      )
+      .end();
+    return false;
+  }
+  return true;
+}
+/**
+ * Test the input string weather it is a valid email
+ * @param {string} email
+ * @returns {boolean}
+ */
+function validEmail(email) {
+  return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
+}
+module.exports = { asyncExpressHandler, assertJsonRequest, validEmail };

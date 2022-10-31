@@ -11,6 +11,15 @@ function asyncExpressHandler(handler) {
   };
 }
 /**
+ * Send a JSON response and end the request processing
+ * @param {import("express").Response} res
+ * @param {number} status
+ * @param {any} payload
+ */
+function sendJsonResponse(res, status, payload) {
+  res.status(status).json(payload).end();
+}
+/**
  * assert the request is a json request, this function will terminate the processing
  * of the request when it is not
  * @param {import("express").Request} req
@@ -19,15 +28,14 @@ function asyncExpressHandler(handler) {
  */
 function assertJsonRequest(req, res) {
   if (!req.is("json")) {
-    res
-      .status(400)
-      .json(
-        new ResponseBase(
-          UNPROCESSABLE_ENTITY,
-          "Cannot process the request, not a JSON payload!"
-        )
+    sendJsonResponse(
+      res,
+      400,
+      new ResponseBase(
+        UNPROCESSABLE_ENTITY,
+        "Cannot process the request, not a JSON payload!"
       )
-      .end();
+    );
     return false;
   }
   return true;
@@ -40,4 +48,9 @@ function assertJsonRequest(req, res) {
 function validEmail(email) {
   return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
 }
-module.exports = { asyncExpressHandler, assertJsonRequest, validEmail };
+module.exports = {
+  asyncExpressHandler,
+  assertJsonRequest,
+  validEmail,
+  sendJsonResponse,
+};

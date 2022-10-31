@@ -105,7 +105,15 @@ class IDatabase {
    * @param {string} token
    * @returns {Promise<boolean>}
    */
-  async touchAccessToken(token) {
+  async revokeAccessToken(token) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get secure word for user
+   * @param {string} id email or username
+   * @returns {Promise<string|null>}
+   */
+  async getUserSecureWord(id) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////

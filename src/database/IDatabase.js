@@ -53,18 +53,19 @@ class IDatabase {
   }
   /**
    * Request the password hash of the given user email
-   * @param {string} email
+   * @param {string} id email or username
    * @returns {Promise<{loginid:number,hash:string}|null>}
    */
-  async obtainUserPasswordHash(email) {
+  async obtainUserPasswordHash(id) {
     throw new Error("Unimplemented");
   }
   /**
    * Create an user in the database
    * @param {User} user user to create, the final user id is returned in the object
-   * @returns {boolean}
+   * @param {string} password user password hash
+   * @returns {Promise<boolean>}
    */
-  async addUser(user) {
+  async addUser(user, password) {
     throw new Error("Unimplemented");
   }
   /**

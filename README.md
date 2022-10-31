@@ -18,3 +18,4 @@ This repository contains the real production backend implementation
 | `database`       | The database connection related |
 | `authentication` | Authentication related code     |
 | `endpoints`      | API Endpoints                   |
+| `middlewares`    | Middleware for the endpoints    |

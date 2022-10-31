@@ -189,7 +189,8 @@ app.post(
       req.body.residence ?? null,
       req.body.address | null,
       birthday ? new Date(birthday) : null,
-      gender
+      gender,
+      req.body.secure_word
     );
     if (!(await DATABASE.addUser(user, password_hash))) {
       throw new Error("Cannot add user into database");

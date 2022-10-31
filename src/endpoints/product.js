@@ -1,5 +1,5 @@
 /**
- * CSRF endpoints which are mounted under `/api/v1/product`
+ * products endpoints which are mounted under `/api/v1/product`
  */
 const express = require("express");
 const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");

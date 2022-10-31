@@ -2,10 +2,11 @@
  * CSRF endpoints which are mounted under `/api/v1/auth`
  */
 const express = require("express");
-const rate_limiter = require("express-rate-limiter");
+const rate_limiter = require("express-rate-limit");
 const { createToken } = require("../authentication/csrf");
 const { RATE_LIMIT_EXCEEDED } = require("../types/error_codes");
 const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");
+const ResponseBase = require("../types/response_base");
 
 const app = express.Router();
 app.use(
@@ -32,3 +33,4 @@ app.get(
     }
   })
 );
+module.exports = app;

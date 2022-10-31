@@ -7,6 +7,7 @@ const express = require("express");
 const { randomSecureWord } = require("../authentication/random_secure_word");
 const { randomID, BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
+const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const User = require("../models/user");
 const AuthenticationResponse = require("../types/authentication_response");
 const {
@@ -44,7 +45,7 @@ app.use(function (req, _res, next) {
     next();
   }
 });
-//TODO implement CRSF middleware and install it here
+app.use(CSRFProtectedMiddleware);
 app.post(
   "/register",
   asyncExpressHandler(async function (req, res, next) {
@@ -301,7 +302,7 @@ app.get(
   asyncExpressHandler(async function (req, res, next) {
     if (req.user) {
       //just revoke the current token
-      await DATABASE.revokeAccessToken(req.get("X-Access-Token"));
+      await DATABASE.revokeAccessToken(req.access_token);
     }
     res.status(204).end();
   })

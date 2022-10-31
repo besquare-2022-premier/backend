@@ -16,6 +16,7 @@ class User {
    * @param {string?} address
    * @param {Date} birthday
    * @param {"secret"|"male"|"female"} gender
+   * @param {string} secure_word
    */
   constructor(
     loginid,
@@ -29,7 +30,8 @@ class User {
     residence,
     address,
     birthday,
-    gender
+    gender,
+    secure_word
   ) {
     this.loginid = loginid;
     this.firstname = firstname;
@@ -43,6 +45,7 @@ class User {
     this.address = address;
     this.birthday = birthday;
     this.gender = gender;
+    this.secure_word = secure_word;
   }
 }
 

@@ -5,16 +5,17 @@ class User {
   /**
    *
    * @param {number} loginid
-   * @param {string?} firstname
-   * @param {string?} lastname
+   * @param {string} firstname
+   * @param {string} lastname
    * @param {string} username
    * @param {string} email
    * @param {string?} tel_no
    * @param {Date} first_join
    * @param {"normal"|"admin"} access_level
    * @param {string?} residence
+   * @param {string?} address
    * @param {Date} birthday
-   * @param {"unknown"|"male"|"female"} gender
+   * @param {"secret"|"male"|"female"} gender
    */
   constructor(
     loginid,
@@ -26,6 +27,7 @@ class User {
     first_join,
     access_level,
     residence,
+    address,
     birthday,
     gender
   ) {
@@ -38,6 +40,7 @@ class User {
     this.first_join = first_join;
     this.access_level = access_level;
     this.residence = residence;
+    this.address = address;
     this.birthday = birthday;
     this.gender = gender;
   }

@@ -15,4 +15,4 @@ async function randomID() {
   return bytes.toString("hex");
 }
 
-module.exports = { randomID };
+module.exports = { randomID, BCRYPT_ROUNDS: 10 };

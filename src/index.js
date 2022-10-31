@@ -1,4 +1,5 @@
-const application = require("express")();
+const express = require("express");
+const application = express();
 const cookie_parser = require("cookie-parser");
 const AccessTokenMiddleware = require("./middlewares/access_token");
 const sessionIdMiddleware = require("./middlewares/session_id");

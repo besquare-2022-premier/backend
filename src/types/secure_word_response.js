@@ -1,4 +1,5 @@
 const { NO_ERROR } = require("./error_codes");
+const ResponseBase = require("./response_base");
 
 /**
  * Response to send when the user is authenticated

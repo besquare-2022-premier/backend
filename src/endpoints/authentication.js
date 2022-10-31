@@ -9,6 +9,7 @@ const { randomID, BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
 const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const User = require("../models/user");
+const { SMTPProvider } = require("../smtp/SMTPConfig");
 const AuthenticationResponse = require("../types/authentication_response");
 const {
   INVALID_EMAIL,
@@ -79,7 +80,11 @@ app.post(
     if (!(await DATABASE.addVerificationCode(email, verification_code))) {
       throw new Error("Cannot save email verification code");
     }
-    //TODO send an email for this
+    await SMTPProvider.sendEmail(
+      email,
+      "Welcome to merch paradise",
+      `Use ${verification_code} to verify you email`
+    );
     //we are done, ask users to check their mailbox
     sendJsonResponse(
       res,

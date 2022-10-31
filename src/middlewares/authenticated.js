@@ -7,7 +7,7 @@ const { INVALID_ACCESS_TOKEN } = require("../types/error_codes");
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-async function AuthenticatedEndpointMiddleware(req, res, next) {
+function AuthenticatedEndpointMiddleware(req, res, next) {
   if (!req.user) {
     sendJsonResponse(
       res,

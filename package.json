@@ -11,24 +11,15 @@
   "license": "ISC",
   "devDependencies": {
     "jest": "^29.2.2",
+    "nodemailer": "^6.8.0",
     "supertest": "^6.3.1"
   },
   "dependencies": {
     "@junchan/type-check": "github:besquare-2022-premier/type-check#1.0.2",
     "bcrypt": "^5.1.0",
+    "cookie-parser": "^1.4.6",
     "express": "^4.18.2",
+    "express-rate-limit": "^6.6.0",
     "pg": "^8.8.0"
-  },
-  "directories": {
-    "test": "test"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/amirzaharii/backend.git"
-  },
-  "keywords": [],
-  "bugs": {
-    "url": "https://github.com/amirzaharii/backend/issues"
-  },
-  "homepage": "https://github.com/amirzaharii/backend#readme"
+  }
 }

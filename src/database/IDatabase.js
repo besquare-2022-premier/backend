@@ -1,6 +1,7 @@
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const User = require("../models/user");
+const Product = require("../models/product");
 
 /**
  * Interface for the database adapter to the rest of the application
@@ -105,7 +106,15 @@ class IDatabase {
    * @param {string} token
    * @returns {Promise<boolean>}
    */
-  async touchAccessToken(token) {
+  async revokeAccessToken(token) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get secure word for user
+   * @param {string} id email or username
+   * @returns {Promise<string|null>}
+   */
+  async getUserSecureWord(id) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////
@@ -145,6 +154,14 @@ class IDatabase {
     limit = 50,
     randomize = false
   ) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the product
+   * @param {number} product_id
+   * @returns {Promise<Product|null>}
+   */
+  async getProduct(product_id) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////

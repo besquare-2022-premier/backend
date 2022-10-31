@@ -12,3 +12,4 @@ class ResponseBase {
     this.message = message;
   }
 }
+module.exports = ResponseBase;

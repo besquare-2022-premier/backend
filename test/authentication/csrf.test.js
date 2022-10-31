@@ -18,7 +18,7 @@ describe("CSRF Token routines", () => {
   });
   it("The expired token shall NOT able to be reused", async function () {
     token = await createToken("test", "access");
-    await new Promise((r) => setTimeout(r, 1000));
+    await new Promise((r) => setTimeout(r, 1500));
     expect(verifyToken(token, "test", "access")).toBe(false);
   });
 });

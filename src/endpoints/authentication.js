@@ -2,11 +2,14 @@
  * Authentication endpoints which are mounted under `/api/v1/auth`
  */
 const { isString, inEnumeration, isValidDate } = require("@junchan/type-check");
-const { hash } = require("bcrypt");
+const { hash, compare } = require("bcrypt");
 const express = require("express");
+const { randomSecureWord } = require("../authentication/random_secure_word");
 const { randomID, BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
+const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const User = require("../models/user");
+const { SMTPProvider } = require("../smtp/SMTPConfig");
 const AuthenticationResponse = require("../types/authentication_response");
 const {
   INVALID_EMAIL,
@@ -17,7 +20,10 @@ const {
   UNPROCESSABLE_ENTITY,
   UNMATCHED_PASSWORD,
   ALREADY_REGISTERED,
+  AUTH_FAILED,
+  NO_REAUTH,
 } = require("../types/error_codes");
+const SecureWordResponse = require("../types/secure_word_response");
 const {
   asyncExpressHandler,
   assertJsonRequest,
@@ -25,7 +31,22 @@ const {
   sendJsonResponse,
 } = require("./common_utils");
 const app = express.Router();
-//TODO implement CRSF middleware and install it here
+//middleware to prevent the routes to be called on authenticated session
+app.use(function (req, _res, next) {
+  if (req.user && req.path !== "/revoke") {
+    sendJsonResponse(
+      req,
+      403,
+      new ResponseBase(
+        NO_REAUTH,
+        "Cannot perform the operation on authenticated session"
+      )
+    );
+  } else {
+    next();
+  }
+});
+app.use(CSRFProtectedMiddleware);
 app.post(
   "/register",
   asyncExpressHandler(async function (req, res, next) {
@@ -59,7 +80,11 @@ app.post(
     if (!(await DATABASE.addVerificationCode(email, verification_code))) {
       throw new Error("Cannot save email verification code");
     }
-    //TODO send an email for this
+    await SMTPProvider.sendEmail(
+      email,
+      "Welcome to merch paradise",
+      `Use ${verification_code} to verify you email`
+    );
     //we are done, ask users to check their mailbox
     sendJsonResponse(
       res,
@@ -189,7 +214,8 @@ app.post(
       req.body.residence ?? null,
       req.body.address | null,
       birthday ? new Date(birthday) : null,
-      gender
+      gender,
+      req.body.secure_word
     );
     if (!(await DATABASE.addUser(user, password_hash))) {
       throw new Error("Cannot add user into database");
@@ -205,3 +231,85 @@ app.post(
     sendJsonResponse(res, 200, new AuthenticationResponse(access_token));
   })
 );
+
+app.post(
+  "/login",
+  asyncExpressHandler(async function (req, res, next) {
+    if (!assertJsonRequest(req, res)) {
+      return;
+    }
+    const { username, password } = req.body;
+    if (!isString(username) || !isString(password)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          REQUIRED_FIELD_MISSING,
+          "Both email and password are required"
+        )
+      );
+      return;
+    }
+    const user_data = await DATABASE.obtainUserPasswordHash(username);
+    /**
+     * It is very important for us to provide the same reaction not matter the input to
+     * prevent timing attack
+     */
+    const hash =
+      user_data?.hash ??
+      "$2a$15$u.yOYKgQZSwfav5pkmc01eSzMJ6lo/yhdEwC7.b.E.MrfrFZYOoR.";
+    /**
+     * NOTE: the comparator code inside the bcrypt are not time safe but it should not matter
+     * as the noise in the nodejs environment will make it difficult
+     */
+    const result = compare(password, hash);
+    if (!result || !user_data) {
+      sendJsonResponse(
+        res,
+        401,
+        new ResponseBase(AUTH_FAILED, "Authentication Failed")
+      );
+      return;
+    }
+    //auth success
+    const token = await randomID();
+    await DATABASE.recordAccessToken(token, user_data.loginid);
+    //yey
+    sendJsonResponse(res, 200, new AuthenticationResponse(token));
+  })
+);
+app.post(
+  "/secure-word",
+  asyncExpressHandler(async function (req, res, next) {
+    if (!assertJsonRequest(req, res)) {
+      return;
+    }
+    const { username } = req.body;
+    if (!isString(username)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          REQUIRED_FIELD_MISSING,
+          "Both email and password are required"
+        )
+      );
+      return;
+    }
+    let secure_word =
+      (await DATABASE.getUserSecureWord(username)) || randomSecureWord();
+    sendJsonResponse(res, 200, new SecureWordResponse(secure_word));
+  })
+);
+
+app.get(
+  "/revoke",
+  asyncExpressHandler(async function (req, res, next) {
+    if (req.user) {
+      //just revoke the current token
+      await DATABASE.revokeAccessToken(req.access_token);
+    }
+    res.status(204).end();
+  })
+);
+module.exports = app;

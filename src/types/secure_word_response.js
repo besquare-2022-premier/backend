@@ -4,14 +4,14 @@ const ResponseBase = require("./response_base");
 /**
  * Response to send when the user is authenticated
  */
-class AuthenticationResponse extends ResponseBase {
+class SecureWordResponse extends ResponseBase {
   /**
-   * @param {string} token
+   * @param {string} secure_word
    */
-  constructor(token) {
+  constructor(secure_word) {
     super(NO_ERROR, "OK");
-    this.token = token;
+    this.secure_word = secure_word;
   }
 }
 
-module.exports = AuthenticationResponse;
+module.exports = SecureWordResponse;

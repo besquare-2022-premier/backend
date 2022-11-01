@@ -55,7 +55,7 @@ class IDatabase {
   }
   /**
    * Request the password hash of the given user email
-   * @param {string} id email or username
+   * @param {string|number} id email or username or loginid
    * @returns {Promise<{loginid:number,hash:string}|null>}
    */
   async obtainUserPasswordHash(id) {

@@ -159,9 +159,10 @@ class IDatabase {
   /**
    * Get the product
    * @param {number} product_id
+   * @param {boolean} bypass_cache
    * @returns {Promise<Product|null>}
    */
-  async getProduct(product_id) {
+  async getProduct(product_id, bypass_cache = false) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////

@@ -203,7 +203,7 @@ class IDatabase {
     throw new Error("Unimplemented");
   }
   /**
-   * Get current cart of user, details are expanded in this call
+   * Commit the cart
    * @param {number} loginid
    * @returns {Promise<void>}
    */

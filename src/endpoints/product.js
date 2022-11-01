@@ -79,7 +79,10 @@ app.get(
   "/categories",
   asyncExpressHandler(async function (_req, res) {
     let categories = await DATABASE.getCategories();
-    sendJsonResponse(res, Object.keys(categories));
+    sendJsonResponse(
+      res,
+      Object.keys(categories).map((z) => categories[z])
+    );
   })
 );
 app.get(
@@ -92,7 +95,7 @@ app.get(
     let offset = limit * (page - 1);
     let categories = await DATABASE.getCategories();
     let { category } = req.params;
-    if (!(category in categories)) {
+    if (Object.keys(categories).findIndex((z) => z === category) - 1) {
       sendJsonResponse(
         res,
         404,

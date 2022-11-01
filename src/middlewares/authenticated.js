@@ -13,7 +13,7 @@ function AuthenticatedEndpointMiddleware(req, res, next) {
   if (!req.user) {
     sendJsonResponse(
       res,
-      403,
+      401,
       new ResponseBase(INVALID_ACCESS_TOKEN, "Unauthenticated request")
     );
     return;

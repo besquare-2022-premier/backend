@@ -1,3 +1,4 @@
+/* eslint no-unused-vars: 0 */
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const User = require("../models/user");
@@ -159,9 +160,10 @@ class IDatabase {
   /**
    * Get the product
    * @param {number} product_id
+   * @param {boolean} bypass_cache
    * @returns {Promise<Product|null>}
    */
-  async getProduct(product_id) {
+  async getProduct(product_id, bypass_cache = false) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////

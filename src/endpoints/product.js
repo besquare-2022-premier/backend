@@ -8,7 +8,7 @@ const PagedResponseBase = require("../types/paged_response_base");
 const app = express.Router();
 app.get(
   "/",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
     page = page ?? 1;
     rnd = q ? false : rnd ?? 0;
@@ -37,14 +37,14 @@ app.get(
 );
 app.get(
   "/categories",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (_req, res) {
     let categories = await DATABASE.getCategories();
     sendJsonResponse(res, Object.keys(categories));
   })
 );
 app.get(
   "/:category",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
     page = page ?? 1;
     rnd = q ? false : rnd ?? 0;

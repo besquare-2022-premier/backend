@@ -1,7 +1,9 @@
+// eslint-disable-next-line no-unused-vars
 const express = require("express");
 const { verifyToken } = require("../authentication/csrf");
 const { sendJsonResponse } = require("../endpoints/common_utils");
 const { INVALID_CRSF_TOKEN } = require("../types/error_codes");
+const ResponseBase = require("../types/response_base");
 /**
  * Middleware to deal with the CSRF
  * @param {express.Request} req

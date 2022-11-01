@@ -178,10 +178,10 @@ class IDatabase {
     throw new Error("Unimplemented");
   }
   /**
-   * Get the specific of the user, the order details are expanded in this call
+   * Get the specific order of the user, the order details are expanded in this call
    * @param {number} loginid
    * @param {number} orderid
-   * @returns {Promise<Order[]>}
+   * @returns {Promise<Order>}
    */
   async getUserOrder(loginid, orderid) {
     throw new Error("Unimplemented");
@@ -189,7 +189,7 @@ class IDatabase {
   /**
    * Attempt to expand the order details. Not meant to be used directly
    * @param {Order} order
-   * @returns {boolean}
+   * @returns {Promise<boolean>}
    */
   async _expandOrderDetails(order) {
     throw new Error("Unimplemented");
@@ -200,6 +200,14 @@ class IDatabase {
    * @returns {Promise<Order>}
    */
   async getUserCart(loginid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get current cart of user, details are expanded in this call
+   * @param {number} loginid
+   * @returns {Promise<void>}
+   */
+  async commitUserCart(loginid) {
     throw new Error("Unimplemented");
   }
   /**
@@ -214,19 +222,21 @@ class IDatabase {
   //    TRANSACTION
   /////////////////////////////////////////////////////////////
   /**
-   * Add a new transaction into the database
-   * @param {Transaction} tx
-   */
-  async addTransaction(tx) {
-    throw new Error("Unimplemented");
-  }
-  /**
    * Get the specified transaction
    * @param {number} loginid
    * @param {number} txid
    * @returns {Promise<Transaction|null>}
    */
   async getTransaction(loginid, txid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Search the transaction ID for the given orderid
+   * @param {number} loginid
+   * @param {number} orderid
+   * @returns {Promise<Transaction|null>}
+   */
+  async searchTransactionForOrder(loginid, orderid) {
     throw new Error("Unimplemented");
   }
   /**

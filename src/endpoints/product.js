@@ -7,7 +7,6 @@ const DATABASE = require("../database/DBConfig");
 const PagedResponseBase = require("../types/paged_response_base");
 const app = express.Router();
 const { PubliclyCacheable, NonCachable } = require("../middlewares/caching");
-const { isInteger } = require("@junchan/type-check");
 const ResponseBase = require("../types/response_base");
 const { INEXISTANT_PRODUCT_ID, NO_ERROR } = require("../types/error_codes");
 app.use(NonCachable);
@@ -15,7 +14,7 @@ app.get(
   "/stocks/:id",
   asyncExpressHandler(async function (req, res) {
     let { id } = req.params;
-    if (!isInteger(id) || ((id |= 0), id <= 0)) {
+    if (((id |= 0), id <= 0)) {
       sendJsonResponse(
         res,
         404,
@@ -27,7 +26,7 @@ app.get(
       return;
     }
     const product = await DATABASE.getProduct(id, true);
-    if (!product) {
+    if (!product || product.stock === 0) {
       sendJsonResponse(
         res,
         404,
@@ -51,9 +50,9 @@ app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
-    page = page ?? 1;
     rnd = q ? false : rnd ?? 0;
-    limit = limit ?? 50;
+    page = page | 0 || 1;
+    limit = limit | 0 || 50;
     let offset = limit * (page - 1);
     let ids =
       page >= 0
@@ -87,9 +86,9 @@ app.get(
   "/:category",
   asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
-    page = page ?? 1;
     rnd = q ? false : rnd ?? 0;
-    limit = limit ?? 50;
+    page = page | 0 || 1;
+    limit = limit | 0 || 50;
     let offset = limit * (page - 1);
     let ids =
       page >= 0

@@ -7,7 +7,7 @@ const express = require("express");
 const { BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
 const AuthenticatedEndpointMiddleware = require("../middlewares/authenticated");
-const { NonCachable } = require("../middlewares/caching");
+const { ClientOnlyCacheable } = require("../middlewares/caching");
 const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const {
   UNPROCESSABLE_ENTITY,
@@ -15,6 +15,7 @@ const {
   IMMUTABLE_FIELD_MODIFICATION,
   AUTH_FAILED,
   UNMATCHED_PASSWORD,
+  NO_ERROR,
 } = require("../types/error_codes");
 const ResponseBase = require("../types/response_base");
 const {
@@ -37,17 +38,12 @@ const schema_model_map = {
 const schema_keys = Object.keys(schema_model_map);
 
 const app = express.Router();
-app.use(NonCachable);
+app.use(ClientOnlyCacheable.bind(60));
 app.use(AuthenticatedEndpointMiddleware);
 app.use(CSRFProtectedMiddleware);
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
-    if (req.user) {
-      throw new Error(
-        "req.user is not here!! Is the middleware missing or bugged off??"
-      );
-    }
     const user = await DATABASE.getUser(req.user);
     if (!user) {
       throw new Error("Cannot get the user");
@@ -64,11 +60,6 @@ app.patch(
   asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
-    }
-    if (req.user) {
-      throw new Error(
-        "req.user is not here!! Is the middleware missing or bugged off??"
-      );
     }
     //get the current state of the user
     let user = await DATABASE.getUser(req.user);
@@ -185,11 +176,6 @@ app.patch(
   asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
-    }
-    if (req.user) {
-      throw new Error(
-        "req.user is not here!! Is the middleware missing or bugged off??"
-      );
     }
     const { password, new_password, new_password_again } = req.body;
     if (!isString(password)) {

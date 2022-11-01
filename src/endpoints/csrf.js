@@ -23,7 +23,7 @@ app.use(
 );
 app.get(
   "/",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (req.user) {
       //request is authenticated then generate a token bound under the access token
       sendJsonResponse(res, 200, await createToken(req.access_token, "access"));

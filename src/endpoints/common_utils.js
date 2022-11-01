@@ -1,4 +1,5 @@
 const { UNPROCESSABLE_ENTITY } = require("../types/error_codes");
+const ResponseBase = require("../types/response_base");
 
 /**
  * A simple wrapper around promise function so the exception do not kill the server
@@ -46,7 +47,7 @@ function assertJsonRequest(req, res) {
  * @returns {boolean}
  */
 function validEmail(email) {
-  return /^[\w-\.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
+  return /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
 }
 module.exports = {
   asyncExpressHandler,

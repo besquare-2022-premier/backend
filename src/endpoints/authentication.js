@@ -7,6 +7,7 @@ const express = require("express");
 const { randomSecureWord } = require("../authentication/random_secure_word");
 const { randomID, BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
+const { NonCachable } = require("../middlewares/caching");
 const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const User = require("../models/user");
 const { SMTPProvider } = require("../smtp/SMTPConfig");
@@ -32,6 +33,7 @@ const {
   sendJsonResponse,
 } = require("./common_utils");
 const app = express.Router();
+app.use(NonCachable);
 //middleware to prevent the routes to be called on authenticated session
 app.use(function (req, _res, next) {
   if (req.user && req.path !== "/revoke") {

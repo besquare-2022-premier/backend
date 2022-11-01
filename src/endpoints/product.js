@@ -6,6 +6,47 @@ const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");
 const DATABASE = require("../database/DBConfig");
 const PagedResponseBase = require("../types/paged_response_base");
 const app = express.Router();
+const { PubliclyCacheable, NonCachable } = require("../middlewares/caching");
+const { isInteger } = require("@junchan/type-check");
+const ResponseBase = require("../types/response_base");
+const { INEXISTANT_PRODUCT_ID, NO_ERROR } = require("../types/error_codes");
+app.use(NonCachable);
+app.get(
+  "/stocks/:id",
+  asyncExpressHandler(async function (req, res) {
+    let { id } = req.params;
+    if (!isInteger(id) || ((id |= 0), id <= 0)) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    const product = await DATABASE.getProduct(id, true);
+    if (!product) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    //TODO maybe we will switch to streaming mode
+    //so dont brother to implement the response type
+    //for it
+    const response = new ResponseBase(NO_ERROR);
+    response.stock = product.stock;
+    sendJsonResponse(res, 200, response);
+  })
+);
+app.use(PubliclyCacheable.bind(60));
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {

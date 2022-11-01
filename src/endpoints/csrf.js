@@ -7,8 +7,10 @@ const { createToken } = require("../authentication/csrf");
 const { RATE_LIMIT_EXCEEDED } = require("../types/error_codes");
 const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");
 const ResponseBase = require("../types/response_base");
+const { NonCachable } = require("../middlewares/caching");
 
 const app = express.Router();
+app.use(NonCachable);
 app.use(
   rate_limiter({
     windowMs: 15 * 60 * 1000,

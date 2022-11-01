@@ -90,6 +90,17 @@ app.get(
     page = page | 0 || 1;
     limit = limit | 0 || 50;
     let offset = limit * (page - 1);
+    let categories = await DATABASE.getCategories();
+    let { category } = req.params;
+    if (!(category in categories)) {
+      sendJsonResponse(
+        res,
+        404,
+        //todo allocate a new error code for this
+        new ResponseBase(INEXISTANT_PRODUCT_ID, "Category not found")
+      );
+      return;
+    }
     let ids =
       page >= 0
         ? await DATABASE.getProductsByCategory(

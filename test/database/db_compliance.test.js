@@ -18,7 +18,7 @@ describe("Compliance test on current implementation", () => {
     async () => {
       let products = await DATABASE.getProducts();
       expect(Array.isArray(products)).toBe(true);
-      for (const id in products) {
+      for (const id of products) {
         const product = await DATABASE.getProduct(id);
         expect(product).toBeTruthy();
         expect(product).not.toBe(0);
@@ -52,7 +52,7 @@ describe("Compliance test on current implementation", () => {
       await randomID(),
       random_email,
       null,
-      new Date(),
+      null,
       "normal",
       "JP",
       "Oosaka",
@@ -61,7 +61,7 @@ describe("Compliance test on current implementation", () => {
       "hanayamata"
     );
     random_hash = await hash((password = await randomID()), BCRYPT_ROUNDS);
-    expect(await DATABASE.addUser(user, randomID)).toBe(true);
+    expect(await DATABASE.addUser(user, random_hash)).toBe(true);
     expect(user.loginid).not.toBe(-1);
   });
   _itif(
@@ -79,21 +79,21 @@ describe("Compliance test on current implementation", () => {
   _it(
     "obtainUserPasswordHash should return the null for the wrong input",
     async function () {
-      const obj = await DATABASE.obtainUserPasswordHash(awaitrandomID());
+      const obj = await DATABASE.obtainUserPasswordHash(await randomID());
       expect(obj).toBe(null);
     }
   );
   _itif(
     user.loginid != -1,
-    "getUser should return the similar object EXCEPT secure word",
+    "getUser should return the similar object EXCEPT secure word and first join",
     async function () {
       const u = await DATABASE.getUser(user.loginid);
       expect(u).toBeTruthy();
       for (const key of Object.keys(u)) {
-        if (key === "secure_word") {
+        if (["secure_word", "first_join"].includes(key)) {
           continue;
         }
-        expect(u[key]).toBe(user[key]);
+        expect(u[key]).toStrictEqual(user[key]);
       }
     }
   );
@@ -104,16 +104,16 @@ describe("Compliance test on current implementation", () => {
       const patch = {
         firstname: "Hanabi",
       };
-      await DATABASE.updateOrderSubtle(user.loginid, patch);
+      await DATABASE.updateUserSubtle(user.loginid, patch);
       //update the local reference copy
       user.firstname = patch.firstname;
       const u = await DATABASE.getUser(user.loginid);
       expect(u).toBeTruthy();
       for (const key of Object.keys(u)) {
-        if (key === "secure_word") {
+        if (["secure_word", "first_join"].includes(key)) {
           continue;
         }
-        expect(u[key]).toBe(user[key]);
+        expect(u[key]).toStrictEqual(user[key]);
       }
     }
   );
@@ -124,7 +124,7 @@ describe("Compliance test on current implementation", () => {
     async function () {
       token = await randomID();
       await DATABASE.recordAccessToken(token, user.loginid);
-      expect(await DATABASE.touchAccessToken(token)).toBe(loginid);
+      expect(await DATABASE.touchAccessToken(token)).toBe(user.loginid);
     }
   );
   _itif(
@@ -138,9 +138,10 @@ describe("Compliance test on current implementation", () => {
   let categories = {};
   _it("getCategories should always succeeded", async function () {
     categories = await DATABASE.getCategories();
+    console.log(categories);
   });
   _itif(
-    Object.keys(categories).length != 0,
+    true,
     "getProductsByCategory should always succeeded",
     async function () {
       await DATABASE.getProductsByCategory(
@@ -154,7 +155,7 @@ describe("Compliance test on current implementation", () => {
     expect(r1).not.toBe(r2);
   });
   _itif(
-    Object.keys(categories).length != 0,
+    true,
     "Randomization inside the getProductsByCategory should work",
     async function () {
       const cat = categories[Object.keys(categories)[0]]; //first category

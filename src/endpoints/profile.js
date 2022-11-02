@@ -38,7 +38,7 @@ const schema_model_map = {
 const schema_keys = Object.keys(schema_model_map);
 
 const app = express.Router();
-app.use(ClientOnlyCacheable.bind(60));
+app.use(ClientOnlyCacheable.bind(null, 60));
 app.use(AuthenticatedEndpointMiddleware);
 app.use(CSRFProtectedMiddleware);
 app.get(

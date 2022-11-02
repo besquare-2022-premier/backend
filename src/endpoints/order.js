@@ -24,7 +24,7 @@ const {
 
 const app = express.Router();
 app.use(AuthenticatedEndpointMiddleware);
-app.use(ClientOnlyCacheable.bind(60));
+app.use(ClientOnlyCacheable.bind(null, 60));
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {

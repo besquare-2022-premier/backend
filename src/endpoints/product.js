@@ -45,7 +45,7 @@ app.get(
     sendJsonResponse(res, 200, response);
   })
 );
-app.use(PubliclyCacheable.bind(60));
+app.use(PubliclyCacheable.bind(null, 60));
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
@@ -81,6 +81,7 @@ app.get(
     let categories = await DATABASE.getCategories();
     sendJsonResponse(
       res,
+      200,
       Object.keys(categories).map((z) => categories[z])
     );
   })
@@ -95,7 +96,10 @@ app.get(
     let offset = limit * (page - 1);
     let categories = await DATABASE.getCategories();
     let { category } = req.params;
-    if (Object.keys(categories).findIndex((z) => z === category) - 1) {
+    if (
+      Object.keys(categories).findIndex((z) => categories[z] === category) ===
+      -1
+    ) {
       sendJsonResponse(
         res,
         404,

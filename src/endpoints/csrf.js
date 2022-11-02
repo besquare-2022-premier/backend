@@ -26,13 +26,15 @@ app.use(
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
+    const response = new ResponseBase(0, "OK");
     if (req.user) {
       //request is authenticated then generate a token bound under the access token
-      sendJsonResponse(res, 200, await createToken(req.access_token, "access"));
+      response.token = await createToken(req.access_token, "access");
     } else {
       //otherwise try use session id
-      sendJsonResponse(res, 200, await createToken(req.session_id, "session"));
+      response.token = await createToken(req.session_id, "session");
     }
+    sendJsonResponse(res, 200, response);
   })
 );
 module.exports = app;

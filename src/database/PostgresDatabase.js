@@ -1,4 +1,5 @@
 const IDatabase = require("./IDatabase");
+// eslint-disable-next-line no-unused-vars
 const { Pool, Client } = require("pg");
 const Product = require("../models/product");
 const User = require("../models/user");
@@ -23,7 +24,7 @@ class PostgresDatabase extends IDatabase {
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
     });
-    this.pool.on("error", (err, _client) => {
+    this.pool.on("error", (err) => {
       console.error("Postgres: Something went wrong!!!!");
       console.error(err);
       process.exit(-1);
@@ -359,6 +360,7 @@ class PostgresDatabase extends IDatabase {
     });
   }
 
+  // eslint-disable-next-line no-unused-vars
   async _expandOrderDetails(order) {
     await this.#doConnected(async function (client) {
       let result = await client.query(
@@ -384,6 +386,7 @@ class PostgresDatabase extends IDatabase {
     });
   }
 
+  // eslint-disable-next-line no-unused-vars
   async updateOrderSubtle(orderid, changes) {}
 
   // async addTransaction(tx) {
@@ -407,6 +410,7 @@ class PostgresDatabase extends IDatabase {
     });
   }
 
+  // eslint-disable-next-line no-unused-vars
   async updateTransactionSubtle(txid, changes) {}
 }
 

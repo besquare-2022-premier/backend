@@ -204,7 +204,7 @@ describe("Compliance test on current implementation", () => {
       expect(cart.items.findIndex((z) => z.product_id === id)).toBe(-1);
     }
   );
-  let tx;
+  let tx = {};
   _itif(user.loginid != -1, "commitUserCart should success", async function () {
     let cart = await DATABASE.getUserCart(user.loginid);
     //get a random product

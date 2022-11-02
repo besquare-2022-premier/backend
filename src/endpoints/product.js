@@ -45,7 +45,7 @@ app.get(
     sendJsonResponse(res, 200, response);
   })
 );
-app.use(PubliclyCacheable.bind(null, 60));
+app.use(PubliclyCacheable.bind(null, 600));
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
@@ -54,6 +54,9 @@ app.get(
     page = page | 0 || 1;
     limit = limit | 0 || 50;
     let offset = limit * (page - 1);
+    if (rnd) {
+      res.set("Cache-Control", "no-store");
+    }
     let ids =
       page >= 0
         ? await DATABASE.getProducts(q ?? null, offset, limit, !!rnd)
@@ -107,6 +110,9 @@ app.get(
         new ResponseBase(INEXISTANT_PRODUCT_ID, "Category not found")
       );
       return;
+    }
+    if (rnd) {
+      res.set("Cache-Control", "no-store");
     }
     let ids =
       page >= 0

@@ -79,7 +79,10 @@ app.get(
   "/categories",
   asyncExpressHandler(async function (_req, res) {
     let categories = await DATABASE.getCategories();
-    sendJsonResponse(res, Object.keys(categories));
+    sendJsonResponse(
+      res,
+      Object.keys(categories).map((z) => categories[z])
+    );
   })
 );
 app.get(
@@ -90,6 +93,17 @@ app.get(
     page = page | 0 || 1;
     limit = limit | 0 || 50;
     let offset = limit * (page - 1);
+    let categories = await DATABASE.getCategories();
+    let { category } = req.params;
+    if (Object.keys(categories).findIndex((z) => z === category) - 1) {
+      sendJsonResponse(
+        res,
+        404,
+        //todo allocate a new error code for this
+        new ResponseBase(INEXISTANT_PRODUCT_ID, "Category not found")
+      );
+      return;
+    }
     let ids =
       page >= 0
         ? await DATABASE.getProductsByCategory(

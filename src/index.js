@@ -4,6 +4,7 @@ const cookie_parser = require("cookie-parser");
 const AccessTokenMiddleware = require("./middlewares/access_token");
 const sessionIdMiddleware = require("./middlewares/session_id");
 const { asyncExpressHandler } = require("./endpoints/common_utils");
+const DATABASE = require("./database/DBConfig");
 
 application.use(express.json());
 application.use(
@@ -26,6 +27,14 @@ if (process.env.JEST_WORKER_ID) {
 } else {
   //otherwise run it as nodejs application
   const PORT = process.env.PORT || 8080;
-  application.listen(PORT);
-  console.log(`Listening on port ${PORT}`);
+  let server;
+  (async function () {
+    await DATABASE.init();
+    server = application.listen(PORT);
+    console.log(`Listening on port ${PORT}`);
+  })(); //init it
+  //attach signal handler to shutdown
+  process.on("SIGTERM", function () {
+    server?.close(DATABASE.shutdown());
+  });
 }

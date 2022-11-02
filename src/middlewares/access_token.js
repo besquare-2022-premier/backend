@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-unused-vars
 const express = require("express");
 const DATABASE = require("../database/DBConfig");
 /**
@@ -11,12 +12,9 @@ async function AccessTokenMiddleware(req, _res, next) {
   if ((access_token = req.get("X-Access-Token"))) {
     let loginid = await DATABASE.touchAccessToken(access_token);
     if (loginid) {
-      //the token is valid so lets get the user data
-      req.user = await DATABASE.getUser(loginid);
-      if (req.user) {
-        //expose the access token
-        req.access_token = token;
-      }
+      req.user = loginid;
+      //expose the access token
+      req.access_token = access_token;
     }
   }
   next();

@@ -6,13 +6,53 @@ const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");
 const DATABASE = require("../database/DBConfig");
 const PagedResponseBase = require("../types/paged_response_base");
 const app = express.Router();
+const { PubliclyCacheable, NonCachable } = require("../middlewares/caching");
+const ResponseBase = require("../types/response_base");
+const { INEXISTANT_PRODUCT_ID, NO_ERROR } = require("../types/error_codes");
+app.use(NonCachable);
+app.get(
+  "/stocks/:id",
+  asyncExpressHandler(async function (req, res) {
+    let { id } = req.params;
+    if (((id |= 0), id <= 0)) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    const product = await DATABASE.getProduct(id, true);
+    if (!product || product.stock === 0) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    //TODO maybe we will switch to streaming mode
+    //so dont brother to implement the response type
+    //for it
+    const response = new ResponseBase(NO_ERROR);
+    response.stock = product.stock;
+    sendJsonResponse(res, 200, response);
+  })
+);
+app.use(PubliclyCacheable.bind(60));
 app.get(
   "/",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
-    page = page ?? 1;
     rnd = q ? false : rnd ?? 0;
-    limit = limit ?? 50;
+    page = page | 0 || 1;
+    limit = limit | 0 || 50;
     let offset = limit * (page - 1);
     let ids =
       page >= 0
@@ -37,18 +77,18 @@ app.get(
 );
 app.get(
   "/categories",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (_req, res) {
     let categories = await DATABASE.getCategories();
     sendJsonResponse(res, Object.keys(categories));
   })
 );
 app.get(
   "/:category",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;
-    page = page ?? 1;
     rnd = q ? false : rnd ?? 0;
-    limit = limit ?? 50;
+    page = page | 0 || 1;
+    limit = limit | 0 || 50;
     let offset = limit * (page - 1);
     let ids =
       page >= 0

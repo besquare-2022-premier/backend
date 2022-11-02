@@ -7,6 +7,7 @@ const express = require("express");
 const { randomSecureWord } = require("../authentication/random_secure_word");
 const { randomID, BCRYPT_ROUNDS } = require("../authentication/utils");
 const DATABASE = require("../database/DBConfig");
+const { NonCachable } = require("../middlewares/caching");
 const CSRFProtectedMiddleware = require("../middlewares/csrf_protected");
 const User = require("../models/user");
 const { SMTPProvider } = require("../smtp/SMTPConfig");
@@ -23,6 +24,7 @@ const {
   AUTH_FAILED,
   NO_REAUTH,
 } = require("../types/error_codes");
+const ResponseBase = require("../types/response_base");
 const SecureWordResponse = require("../types/secure_word_response");
 const {
   asyncExpressHandler,
@@ -31,6 +33,7 @@ const {
   sendJsonResponse,
 } = require("./common_utils");
 const app = express.Router();
+app.use(NonCachable);
 //middleware to prevent the routes to be called on authenticated session
 app.use(function (req, _res, next) {
   if (req.user && req.path !== "/revoke") {
@@ -49,7 +52,7 @@ app.use(function (req, _res, next) {
 app.use(CSRFProtectedMiddleware);
 app.post(
   "/register",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
     }
@@ -63,7 +66,7 @@ app.post(
       return;
     }
     //query the backend to see is the email is already used
-    const user_info = await DATABASE.obtainUserPasswordHash(req, body.email);
+    const user_info = await DATABASE.obtainUserPasswordHash(email);
     if (user_info) {
       sendJsonResponse(
         res,
@@ -98,7 +101,7 @@ app.post(
 );
 app.post(
   "/finalize-registration",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
     }
@@ -234,7 +237,7 @@ app.post(
 
 app.post(
   "/login",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
     }
@@ -280,7 +283,7 @@ app.post(
 );
 app.post(
   "/secure-word",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
       return;
     }
@@ -304,7 +307,7 @@ app.post(
 
 app.get(
   "/revoke",
-  asyncExpressHandler(async function (req, res, next) {
+  asyncExpressHandler(async function (req, res) {
     if (req.user) {
       //just revoke the current token
       await DATABASE.revokeAccessToken(req.access_token);

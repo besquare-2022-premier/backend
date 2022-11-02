@@ -7,5 +7,7 @@ const app = express.Router();
 app.use("/auth", require("./authentication"));
 app.use("/csrf", require("./csrf"));
 app.use("/product", require("./product"));
+app.use("/whoami", require("./profile"));
+app.use("/orders", require("./order"));
 
 module.exports = app;

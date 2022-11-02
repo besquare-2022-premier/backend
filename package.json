@@ -17,7 +17,7 @@
     "supertest": "^6.3.1"
   },
   "dependencies": {
-    "@junchan/type-check": "github:besquare-2022-premier/type-check#1.0.2",
+    "@junchan/type-check": "github:besquare-2022-premier/type-check#1.0.3",
     "bcrypt": "^5.1.0",
     "cookie-parser": "^1.4.6",
     "express": "^4.18.2",

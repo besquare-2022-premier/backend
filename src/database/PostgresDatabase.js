@@ -63,7 +63,8 @@ class PostgresDatabase extends IDatabase {
       await client.query(
         `INSERT INTO premier.verification
         (verification_email,verification_code) 
-        VALUES ($1,$2)`,
+        VALUES ($1,$2) ON CONFLICT (verification_email) DO UPDATE 
+        SET verification_code=excluded.verification_code`,
         [email, code]
       );
     });
@@ -238,7 +239,7 @@ class PostgresDatabase extends IDatabase {
   }
 
   async getUserSecureWord(id) {
-    await this.#doConnected(async function (client) {
+    return await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT secure_word FROM premier.user_details
         WHERE username = $1 OR email = $1`,

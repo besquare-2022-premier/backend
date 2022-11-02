@@ -33,12 +33,22 @@ const {
   sendJsonResponse,
 } = require("./common_utils");
 const app = express.Router();
+app.get(
+  "/revoke",
+  asyncExpressHandler(async function (req, res) {
+    if (req.user) {
+      //just revoke the current token
+      await DATABASE.revokeAccessToken(req.access_token);
+    }
+    res.status(204).end();
+  })
+);
 app.use(NonCachable);
 //middleware to prevent the routes to be called on authenticated session
-app.use(function (req, _res, next) {
-  if (req.user && req.path !== "/revoke") {
+app.use(function (req, res, next) {
+  if (req.user) {
     sendJsonResponse(
-      req,
+      res,
       403,
       new ResponseBase(
         NO_REAUTH,
@@ -110,7 +120,7 @@ app.post(
     //check the verification code first
     if (
       !isString(verification_code) ||
-      !(email = await DATABASE.verifyVerificationCode())
+      !(email = await DATABASE.verifyVerificationCode(verification_code))
     ) {
       sendJsonResponse(
         res,
@@ -146,7 +156,7 @@ app.post(
         return;
       }
     }
-    if (!/^[+]?[0-9]{10,15}$/.test(req.body.telephone_numer)) {
+    if (!/^[+]?[0-9]{10,15}$/.test(req.body.telephone_number)) {
       sendJsonResponse(
         res,
         400,
@@ -196,7 +206,7 @@ app.post(
         400,
         new ResponseBase(
           ALREADY_REGISTERED,
-          "The email address is already registered"
+          "The username is already registered"
         )
       );
       return;
@@ -211,11 +221,11 @@ app.post(
       req.body.last_name,
       req.body.username,
       email,
-      req.body.telephone_numer,
+      req.body.telephone_number,
       new Date(),
       "normal",
       req.body.residence ?? null,
-      req.body.address | null,
+      req.body.address ?? null,
       birthday ? new Date(birthday) : null,
       gender,
       req.body.secure_word
@@ -265,7 +275,7 @@ app.post(
      * NOTE: the comparator code inside the bcrypt are not time safe but it should not matter
      * as the noise in the nodejs environment will make it difficult
      */
-    const result = compare(password, hash);
+    const result = await compare(password, hash);
     if (!result || !user_data) {
       sendJsonResponse(
         res,
@@ -292,27 +302,15 @@ app.post(
       sendJsonResponse(
         res,
         400,
-        new ResponseBase(
-          REQUIRED_FIELD_MISSING,
-          "Both email and password are required"
-        )
+        new ResponseBase(REQUIRED_FIELD_MISSING, "The email are required")
       );
       return;
     }
     let secure_word =
-      (await DATABASE.getUserSecureWord(username)) || randomSecureWord();
+      (await DATABASE.getUserSecureWord(username)) ||
+      (await randomSecureWord());
     sendJsonResponse(res, 200, new SecureWordResponse(secure_word));
   })
 );
 
-app.get(
-  "/revoke",
-  asyncExpressHandler(async function (req, res) {
-    if (req.user) {
-      //just revoke the current token
-      await DATABASE.revokeAccessToken(req.access_token);
-    }
-    res.status(204).end();
-  })
-);
 module.exports = app;

@@ -1,3 +1,4 @@
+const { isString } = require("@junchan/type-check");
 const nodemailer = require("nodemailer");
 class FakeEmailSMTPProvider {
   /**
@@ -14,11 +15,21 @@ class FakeEmailSMTPProvider {
     from = "no-reply@merch-paradise.xyz"
   ) {
     if (!FakeEmailSMTPProvider.transporter) {
-      const account = await nodemailer.createTestAccount();
+      const { FAKE_MAIL_USER, FAKE_MAIL_PASS } = process.env;
+      let account;
+      if (isString(FAKE_MAIL_PASS) && isString(FAKE_MAIL_USER)) {
+        account = {
+          user: FAKE_MAIL_USER,
+          pass: FAKE_MAIL_PASS,
+        };
+      } else {
+        account = await nodemailer.createTestAccount();
+      }
       console.log(account);
       FakeEmailSMTPProvider.transporter = nodemailer.createTransport({
         host: "smtp.ethereal.email",
         port: 587,
+        pool: true,
         secure: false, // true for 465, false for other ports
         auth: {
           user: account.user, // generated ethereal user
@@ -30,7 +41,7 @@ class FakeEmailSMTPProvider {
      * @type{nodemailer.Transporter}
      */
     const { transporter } = FakeEmailSMTPProvider;
-    await transporter.sendEmail({
+    await transporter.sendMail({
       from,
       to: email,
       subject,

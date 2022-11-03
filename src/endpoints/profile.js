@@ -35,6 +35,7 @@ const schema_model_map = {
   first_join: "first_join",
   gender: "gender",
   birthday: "birthday",
+  telephone_number: "tel_no",
 };
 const schema_keys = Object.keys(schema_model_map);
 
@@ -103,6 +104,18 @@ app.patch(
                 new ResponseBase(
                   ALREADY_REGISTERED,
                   "The username is already registered"
+                )
+              );
+              return;
+            }
+          } else if (key === "telephone_number" && user.tel_no != value) {
+            if (await DATABASE.isPhoneNumberUsed(value)) {
+              sendJsonResponse(
+                res,
+                400,
+                new ResponseBase(
+                  ALREADY_REGISTERED,
+                  "The phone number is already registered"
                 )
               );
               return;

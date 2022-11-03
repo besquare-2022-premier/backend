@@ -211,6 +211,18 @@ app.post(
       );
       return;
     }
+    //check the phone number too
+    if (await DATABASE.isPhoneNumberUsed(req.body.telephone_number)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          ALREADY_REGISTERED,
+          "The phone number is already registered"
+        )
+      );
+      return;
+    }
     //process the registration now!!!
     //hash the password
     const password_hash = await hash(req.body.password, BCRYPT_ROUNDS);

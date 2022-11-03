@@ -140,7 +140,6 @@ describe("Compliance test on current implementation", () => {
   let categories = {};
   _it("getCategories should always succeeded", async function () {
     categories = await DATABASE.getCategories();
-    console.log(categories);
   });
   _itif(
     true,
@@ -186,7 +185,7 @@ describe("Compliance test on current implementation", () => {
       change[id] = 10;
       await DATABASE.updateOrderSubtle(cart.orderid, change);
       //perform the check
-      cart = await DATABASE.getUserOrder(user.loginid);
+      cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.find((z) => z.product_id === id)?.quantity).toBe(10);
     }
   );
@@ -200,7 +199,7 @@ describe("Compliance test on current implementation", () => {
       //issue the change
       await DATABASE.updateOrderSubtle(cart.orderid, change);
       //perform the check
-      cart = await DATABASE.getUserOrder(user.loginid);
+      cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.findIndex((z) => z.product_id === id)).toBe(-1);
     }
   );
@@ -213,9 +212,9 @@ describe("Compliance test on current implementation", () => {
     let change = {};
     change[id] = 10;
     await DATABASE.updateOrderSubtle(cart.orderid, change);
-    //we need it for reference
-    cart = await DATABASE.getUserOrder(user.loginid);
     tx = await DATABASE.commitUserCart(user.loginid);
+    //we need it for reference
+    cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
     expect(tx.loginid).toBe(user.loginid);
     expect(tx.orderid).toBe(cart.orderid);
     expect(tx.tx_status).toBe(Transaction.Status.CREATED);
@@ -228,7 +227,7 @@ describe("Compliance test on current implementation", () => {
     "getTransaction get return a similar transaction to commit",
     async function () {
       expect(tx).toStrictEqual(
-        await DATABASE.getTransaction(loginid, tx.tx_id)
+        await DATABASE.getTransaction(user.loginid, tx.tx_id)
       );
     }
   );
@@ -249,7 +248,7 @@ describe("Compliance test on current implementation", () => {
       let changes = {
         tx_status: Transaction.Status.CANCELLED,
       };
-      await DATABASE.updateTransactionSubtle(tx, tx_id, changes);
+      await DATABASE.updateTransactionSubtle(tx.tx_id, changes);
       expect(
         (await DATABASE.getTransaction(user.loginid, tx.tx_id))?.tx_status
       ).toBe(Transaction.Status.CANCELLED);

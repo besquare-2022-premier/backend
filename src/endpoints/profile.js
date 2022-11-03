@@ -15,6 +15,7 @@ const {
   IMMUTABLE_FIELD_MODIFICATION,
   AUTH_FAILED,
   UNMATCHED_PASSWORD,
+  ALREADY_REGISTERED,
   NO_ERROR,
 } = require("../types/error_codes");
 const ResponseBase = require("../types/response_base");

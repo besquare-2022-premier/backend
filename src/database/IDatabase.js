@@ -205,7 +205,7 @@ class IDatabase {
   /**
    * Commit the cart
    * @param {number} loginid
-   * @returns {Promise<void>}
+   * @returns {Promise<Transaction>}
    */
   async commitUserCart(loginid) {
     throw new Error("Unimplemented");

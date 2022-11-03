@@ -3,6 +3,8 @@ const IDatabase = require("./IDatabase");
 const { Pool, Client } = require("pg");
 const Product = require("../models/product");
 const User = require("../models/user");
+const Order = require("../models/order");
+const Transaction = require("../models/transaction");
 
 // client.query(`select * from premier.user_details`, (err, result) => {
 //   if (!err) {
@@ -23,6 +25,7 @@ class PostgresDatabase extends IDatabase {
       port: process.env.POSTGRES_PORT,
       password: process.env.POSTGRES_PASSWORD,
       database: process.env.POSTGRES_DB,
+      idleTimeoutMillis: 30000,
     });
     this.pool.on("error", (err) => {
       console.error("Postgres: Something went wrong!!!!");
@@ -173,13 +176,11 @@ class PostgresDatabase extends IDatabase {
     );
   }
 
-  //need checking
   async updateUserSubtle(loginid, changes) {
     //construct the statement on the fly
     let updates = "";
     let params = [loginid];
     const map = {
-      loginid: "loginid",
       firstname: "fname",
       lastname: "lname",
       username: "username",
@@ -199,6 +200,7 @@ class PostgresDatabase extends IDatabase {
       const value = changes[key];
       params.push(value === IDatabase.DELETED ? null : value);
     }
+    if (updates.length === 0) return;
     await this.#doConnected(async function (client) {
       const query = `UPDATE premier.user_details
         SET ${updates.slice(0, -1)}
@@ -332,76 +334,259 @@ class PostgresDatabase extends IDatabase {
       return result.rows.map((z) => z.productid);
     });
   }
-
+  /**
+   * Construct the order from the row data
+   * @param {any} data
+   * @returns {Order}
+   */
+  #constructOrderFromRow(data) {
+    return new Order(
+      data.orderid,
+      data.loginid,
+      data.ship_address,
+      data.country,
+      []
+    );
+  }
   async getOrdersOfUser(loginid) {
-    await this.#doConnected(async function (client) {
+    const self = this;
+    return await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT * from premier.orders
         WHERE loginid = $1`,
         [loginid]
       );
-      return result.rows[0] ?? null;
+      return result.rows.map((z) => self.#constructOrderFromRow(z)) ?? null;
     });
   }
 
   async getUserOrder(loginid, orderid) {
-    await this.#doConnected(async function (client) {
+    let result = await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT ud.username, ud.email, ud.tel_no,
-	        od.*, o.ship_address, o.country
-        FROM premier.user_details AS ud
-        INNER JOIN premier.orders AS o
-	        ON ud.loginid = o.loginid
-        INNER JOIN premier.order_details AS od
-	        ON o.orderid = od.orderid
-        WHERE ud.loginid = $1 AND o.orderid = $2`
+        `SELECT * FROM premier.orders
+        WHERE loginid = $1 AND orderid = $2`,
+        [loginid, orderid]
       );
-      [loginid, orderid];
       return result.rows[0] ?? null;
     });
+    if (result) {
+      let ret = this.#constructOrderFromRow(result);
+      await this._expandOrderDetails(ret);
+      return ret;
+    } else {
+      return null;
+    }
   }
 
-  // eslint-disable-next-line no-unused-vars
   async _expandOrderDetails(order) {
-    await this.#doConnected(async function (client) {
+    let query_result = await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT o.*, od.productid, od.quantity, od.price
-        FROM premier.orders AS o
-        INNER JOIN premier.order_details AS od
-	      ON o.orderid = od.orderid`
+        `SELECT productid as product_id, quantity, price
+        FROM premier.order_details where orderid=$1`,
+        [order.orderid]
       );
-      return result.rows[0] ?? null;
+      return result.rows;
     });
+    if (query_result) {
+      order.items = query_result;
+    } else {
+      throw new Error("Query failed");
+    }
   }
 
   async getUserCart(loginid) {
-    await this.#doConnected(async function (client) {
+    let return_val = await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT o.orderid FROM premier.orders AS o
+        `SELECT o.* FROM premier.orders AS o
         WHERE o.loginid = $1 AND NOT EXISTS
         (SELECT t.orderid FROM premier.transaction AS t
-          WHERE o.orderid = t.orderid)`,
+          WHERE o.orderid = t.orderid);`,
         [loginid]
       );
-      return result.rows[0] ?? null;
+      return result.rows;
     });
+    //check the value first
+    if (return_val.length === 0) {
+      //there is nothing then create a new order for cart
+      let ret = await this.#doConnected(async function (client) {
+        let data = await client.query(
+          `INSERT INTO premier.orders 
+        (loginid,ship_address,country)
+        VALUES ($1,'','') RETURNING *`,
+          [loginid]
+        );
+        return data.rows;
+      });
+      return this.#constructOrderFromRow(ret[0]);
+    } else {
+      let ret = this.#constructOrderFromRow(return_val[0]);
+      await this._expandOrderDetails(ret);
+      return ret;
+    }
   }
 
-  // eslint-disable-next-line no-unused-vars
-  async updateOrderSubtle(orderid, changes) {}
+  async updateOrderSubtle(orderid, changes) {
+    //construct the statement on the fly
+    let updates = "";
+    let params = [orderid];
+    const map = {
+      shipping_address: "ship_address",
+      country: "ship_address",
+    };
+    let details_change = {};
+    let i = 2;
+    for (const key of Object.keys(changes)) {
+      if ((key | 0) == key) {
+        details_change[key] = changes[key];
+        continue;
+      }
+      updates += ` ${map[key]}=$${i++} ,`;
+      const value = changes[key];
+      params.push(value === IDatabase.DELETED ? null : value);
+    }
+    let succeeded = await this.#doConnected(async function (client) {
+      //process the changes in a transaction
+      await client.query("BEGIN;");
+      try {
+        const query = `UPDATE premier.orders
+        SET ${updates.slice(0, -1)}
+        WHERE orderid = $1`;
+        if (updates.length > 0) {
+          await client.query(query, params);
+        }
+        for (const key of Object.keys(details_change)) {
+          const val = details_change[key];
+          if (val === IDatabase.DELETED) {
+            await client.query(
+              `DELETE FROM premier.order_details
+           WHERE orderid=$1 AND productid=$2;`,
+              [orderid, key]
+            );
+          } else {
+            await client.query(
+              `INSERT INTO premier.order_details 
+           VALUES ($1,$2,$3,1) ON CONFLICT (orderid,productid) DO UPDATE SET quantity=excluded.quantity;`,
+              [orderid, key, val]
+            );
+          }
+          await client.query("COMMIT");
+          return true;
+        }
+      } catch (e) {
+        await client.query("ROLLBACK");
+        throw e;
+      }
+    });
+    if (!succeeded) throw new Error("Cannot process the modification");
+  }
 
-  // async addTransaction(tx) {
-  //   await this.#doConnected(async function (client) {
-  //     await client.query(
-  //       `INSERT INTO premier.transaction
-  //       VALUES ($1)`,
-  //       [tx]
-  //     );
-  //   });
-  // }
-
+  /**
+   * Commit the cart
+   * @param {number} loginid
+   * @returns {Promise<Transaction>}
+   */
+  async commitUserCart(loginid) {
+    const self = this;
+    //try to get the order id
+    return await this.#doConnected(async function (client) {
+      await client.query("BEGIN");
+      try {
+        //lock the table
+        await client.query(
+          "LOCK TABLE premier.product,premier.orders IN SHARE ROW EXCLUSIVE MODE"
+        );
+        let cart_info = (
+          await client.query(
+            `SELECT o.orderid FROM premier.orders AS o
+        WHERE o.loginid = $1 AND NOT EXISTS
+        (SELECT t.orderid FROM premier.transaction AS t
+          WHERE o.orderid = t.orderid) FOR UPDATE;`,
+            [loginid]
+          )
+        ).rows[0];
+        if (!cart_info) {
+          throw new Error("Cannot get order id for the cart");
+        }
+        //get all items in the cart and synchronize all the prices
+        let items = (
+          await client.query(
+            `WITH prices AS (
+          SELECT productid ,price 
+          FROM premier.product 
+          WHERE productid IN (SELECT productid FROM premier.order_details WHERE orderid=$1)
+          FOR UPDATE)
+          UPDATE premier.order_details AS od 
+        SET price=pd.price FROM prices as pd WHERE orderid=$1 AND pd.productid=od.productid RETURNING *`,
+            [cart_info.orderid]
+          )
+        ).rows;
+        //get the quantities of the product
+        let quantities_arr = (
+          await client.query(`
+              SELECT productid,stock FROM
+              premier.product WHERE productid IN (${items
+                .map((z) => z.productid | 0)
+                .join(",")})
+              FOR UPDATE
+        `)
+        ).rows;
+        let quantities = {};
+        for (const entry of quantities_arr) {
+          quantities[entry.productid] = entry.stock;
+        }
+        let sum = 0;
+        //check weather the product is enough
+        for (const entry of items) {
+          if (
+            quantities[entry.productid] != -1 &&
+            quantities[entry.productid] < entry.quantity
+          ) {
+            throw new Error(
+              "No enough stock for the product id=" + entry.productid
+            );
+          }
+          sum += entry.quantity * entry.price;
+        }
+        //pre-commit the transaction
+        await client.query(
+          `with counts as (
+          SELECT * FROM premier.order_details WHERE orderid=$1
+          ) UPDATE premier.product SET stock=stock-counts.quantity
+          FROM counts WHERE counts.productid=product.productid AND stock != -1`,
+          [cart_info.orderid]
+        );
+        //create the transaction now
+        let tx = await client.query(
+          `
+            INSERT INTO premier.transaction (orderid,loginid,amount)
+            VALUES ($1,$2,$3) RETURNING *;
+        `,
+          [cart_info.orderid, loginid, sum]
+        );
+        //we are done commit it then
+        await client.query("COMMIT");
+        return self.#constructTransactionFromRow(tx.rows[0]);
+      } catch (e) {
+        await client.query("ROLLBACK");
+        console.log(e);
+        throw e;
+      }
+    });
+  }
+  #constructTransactionFromRow(row) {
+    return new Transaction(
+      row.transactionid,
+      row.orderid,
+      row.loginid,
+      row.amount | 0,
+      row.payment_method,
+      Transaction.Status[row.tx_status.toUpperCase()],
+      row.tx_time,
+      row.tx_settle_time
+    );
+  }
   async getTransaction(loginid, txid) {
-    await this.#doConnected(async function (client) {
+    let query_result = await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT * FROM premier.transaction
         WHERE loginid = $1 AND transactionid = $2`,
@@ -409,10 +594,54 @@ class PostgresDatabase extends IDatabase {
       );
       return result.rows[0] ?? null;
     });
+    if (!query_result) {
+      return null;
+    }
+    return this.#constructTransactionFromRow(query_result);
   }
 
-  // eslint-disable-next-line no-unused-vars
-  async updateTransactionSubtle(txid, changes) {}
+  async searchTransactionForOrder(loginid, orderid) {
+    let query_result = await this.#doConnected(async function (client) {
+      let result = await client.query(
+        `SELECT * FROM premier.transaction
+        WHERE loginid = $1 AND orderid = $2`,
+        [loginid, orderid]
+      );
+      return result.rows[0] ?? null;
+    });
+    if (!query_result) {
+      return null;
+    }
+    return this.#constructTransactionFromRow(query_result);
+  }
+
+  async updateTransactionSubtle(txid, changes) {
+    //construct the statement on the fly
+    let updates = "";
+    let params = [txid];
+    const map = {
+      amount: "amount",
+      payment_method: "payment_method",
+      tx_status: "tx_status",
+      tx_settle_time: "tx_settle_time",
+    };
+    let i = 2;
+    for (const key of Object.keys(changes)) {
+      updates += ` ${map[key]}=$${i++} ,`;
+      const value =
+        key === "tx_status"
+          ? changes[key].description.toLowerCase()
+          : changes[key];
+      params.push(value === IDatabase.DELETED ? null : value);
+    }
+    if (updates.length === 0) return;
+    await this.#doConnected(async function (client) {
+      const query = `UPDATE premier.transaction
+        SET ${updates.slice(0, -1)}
+        WHERE transactionid = $1`;
+      await client.query(query, params);
+    });
+  }
 }
 
 module.exports = PostgresDatabase;

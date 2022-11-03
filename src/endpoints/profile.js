@@ -93,6 +93,20 @@ app.patch(
           );
           return;
         } else {
+          if (key === "username" && user.username != value) {
+            const user_info = await DATABASE.obtainUserPasswordHash(value);
+            if (user_info) {
+              sendJsonResponse(
+                res,
+                400,
+                new ResponseBase(
+                  ALREADY_REGISTERED,
+                  "The username is already registered"
+                )
+              );
+              return;
+            }
+          }
           patch_list[schema_model_map[key]] = value;
         }
       }
@@ -171,7 +185,7 @@ app.patch(
     sendJsonResponse(res, 200, response);
   })
 );
-app.patch(
+app.post(
   "/change-password",
   asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {

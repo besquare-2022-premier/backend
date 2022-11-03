@@ -21,6 +21,7 @@ app.use(
       RATE_LIMIT_EXCEEDED,
       "The rate limit is exceeded"
     ),
+    keyGenerator: (request) => request.user ?? request.ip,
   })
 );
 app.get(

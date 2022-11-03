@@ -2,6 +2,7 @@ const { hash } = require("bcrypt");
 const { randomID, BCRYPT_ROUNDS } = require("../../src/authentication/utils");
 const DATABASE = require("../../src/database/DBConfig");
 const IDatabase = require("../../src/database/IDatabase");
+const Transaction = require("../../src/models/transaction");
 const User = require("../../src/models/user");
 const _ready = process.env.HAVE_DB && DATABASE.constructor != IDatabase;
 /**
@@ -13,10 +14,11 @@ const _itif = (status, desc, func) =>
 describe("Compliance test on current implementation", () => {
   beforeAll(() => _ready && DATABASE.init());
   afterAll(() => _ready && DATABASE.shutdown());
+  let products;
   _it(
     "The list of product ids returned by getProducts should be in stock",
     async () => {
-      let products = await DATABASE.getProducts();
+      products = await DATABASE.getProducts();
       expect(Array.isArray(products)).toBe(true);
       for (const id of products) {
         const product = await DATABASE.getProduct(id);
@@ -138,7 +140,6 @@ describe("Compliance test on current implementation", () => {
   let categories = {};
   _it("getCategories should always succeeded", async function () {
     categories = await DATABASE.getCategories();
-    console.log(categories);
   });
   _itif(
     true,
@@ -168,7 +169,89 @@ describe("Compliance test on current implementation", () => {
     user.loginid != -1,
     "getUserCart should always succeeded",
     async function () {
-      await DATABASE.getUserCart(user.loginid);
+      expect(await DATABASE.getUserCart(user.loginid)).toBeTruthy();
+    }
+  );
+  let id = 0;
+  _itif(
+    user.loginid != -1,
+    "updateOrderSubtle shall have effect on the cart",
+    async function () {
+      let cart = await DATABASE.getUserCart(user.loginid);
+      //get a random product
+      id = products.sort(() => Math.random() - 0.5)[0];
+      //issue the change
+      let change = {};
+      change[id] = 10;
+      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      //perform the check
+      cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
+      expect(cart.items.find((z) => z.product_id === id)?.quantity).toBe(10);
+    }
+  );
+  _itif(
+    user.loginid != -1,
+    "updateOrderSubtle shall react to DELETED by removing the product from the order",
+    async function () {
+      let cart = await DATABASE.getUserCart(user.loginid);
+      let change = {};
+      change[id] = IDatabase.DELETED;
+      //issue the change
+      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      //perform the check
+      cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
+      expect(cart.items.findIndex((z) => z.product_id === id)).toBe(-1);
+    }
+  );
+  let tx = {};
+  _itif(user.loginid != -1, "commitUserCart should success", async function () {
+    let cart = await DATABASE.getUserCart(user.loginid);
+    //get a random product
+    id = products.sort(() => Math.random() - 0.5)[0];
+    //issue the change
+    let change = {};
+    change[id] = 10;
+    await DATABASE.updateOrderSubtle(cart.orderid, change);
+    tx = await DATABASE.commitUserCart(user.loginid);
+    //we need it for reference
+    cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
+    expect(tx.loginid).toBe(user.loginid);
+    expect(tx.orderid).toBe(cart.orderid);
+    expect(tx.tx_status).toBe(Transaction.Status.CREATED);
+    expect(tx.amount).toBe(
+      cart.items.reduce((prev, now) => prev + now.price * now.quantity, 0)
+    );
+  });
+  _itif(
+    user.loginid != -1 && tx.tx_id != -1,
+    "getTransaction get return a similar transaction to commit",
+    async function () {
+      expect(tx).toStrictEqual(
+        await DATABASE.getTransaction(user.loginid, tx.tx_id)
+      );
+    }
+  );
+  _itif(
+    user.loginid != -1 && tx.tx_id != -1,
+    "searchTransactionForOrder should return the correct transaction",
+    async function () {
+      expect(
+        (await DATABASE.searchTransactionForOrder(user.loginid, tx.orderid))
+          ?.tx_id
+      ).toBe(tx.tx_id);
+    }
+  );
+  _itif(
+    user.loginid != -1 && tx.tx_id != -1,
+    "updateTransactionSubtle should have effect",
+    async function () {
+      let changes = {
+        tx_status: Transaction.Status.CANCELLED,
+      };
+      await DATABASE.updateTransactionSubtle(tx.tx_id, changes);
+      expect(
+        (await DATABASE.getTransaction(user.loginid, tx.tx_id))?.tx_status
+      ).toBe(Transaction.Status.CANCELLED);
     }
   );
 });

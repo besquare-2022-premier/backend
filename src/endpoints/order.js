@@ -13,6 +13,8 @@ const {
   INEXISTANT_PRODUCT_ID,
   ITEMS_OUT_OF_STOCK,
   UNPROCESSABLE_ENTITY,
+  NO_ADDRESS_TO_SHIP,
+  EMPTY_CHECKOUT_LIST,
 } = require("../types/error_codes");
 const PagedResponseBase = require("../types/paged_response_base");
 const ResponseBase = require("../types/response_base");
@@ -253,8 +255,53 @@ app.post(
 );
 app.get(
   "/cart/checkout",
-  asyncExpressHandler(async function () {
-    ///TODO
+  asyncExpressHandler(async function (req, res) {
+    if (!assertJsonRequest(req, res)) {
+      return;
+    }
+    const { address, residence } = req.body;
+    //perform final check on data before actually commit the cart
+    const user = await DATABASE.getUser(req.user);
+    const order = await DATABASE.getUserCart(req.user);
+    if (address && residence) {
+      //copy over the provided addresses to the order
+      await DATABASE.updateOrderSubtle(order.orderid, {
+        shipping_address: address,
+        country: residence,
+      });
+    } else if (user.shipping_address && user.residence) {
+      //copy over the user addresses to the order
+      await DATABASE.updateOrderSubtle(order.orderid, {
+        shipping_address: user.shipping_address,
+        country: user.residence,
+      });
+    } else {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          NO_ADDRESS_TO_SHIP,
+          "No address is provided neither by payload nor by account profile"
+        )
+      );
+      return;
+    }
+    if (order.items.length === 0) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(EMPTY_CHECKOUT_LIST, "Cannot checkout empty cart")
+      );
+      return;
+    }
+    let tx;
+    //TODO commit it
+    try {
+      tx = await DATABASE.commitUserCart(req.user);
+      tx.amount;
+    } catch (e) {
+      console.log(e);
+    }
   })
 );
 module.exports = app;

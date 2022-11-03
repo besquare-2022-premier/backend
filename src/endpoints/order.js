@@ -120,6 +120,7 @@ async function getCart(req, res) {
   const cart = await DATABASE.getUserCart(req.user);
   const items = await cart.items.map((z) =>
     DATABASE.getProduct(z.product_id).then((y) => {
+      z.price = y.price; //save db the processing time
       z.product_name = y.name;
       z.available = y.stock !== 0;
       return z;

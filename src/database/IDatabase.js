@@ -248,6 +248,15 @@ class IDatabase {
     throw new Error("Unimplemented");
   }
   /**
+   * Search a transaction using the reference code issued by the payment method
+   * @param {string} method
+   * @param {string} reference
+   * @returns {Promise<Transaction|null>}
+   */
+  async searchTransactionForReference(method, reference) {
+    throw new Error("Unimplemented");
+  }
+  /**
    * A function for the database to apply the update without needing to compare the values
    * @param {number} txid
    * @param {{[key:any]:any}} changes

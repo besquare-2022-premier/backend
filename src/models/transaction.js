@@ -30,7 +30,8 @@ class Transaction {
    * @param {string?} payment_method
    * @param {TransactionStatus} tx_status
    * @param {Date} tx_time
-   * @param {Date} tx_settled
+   * @param {Date?} tx_settled
+   * @param {string?} tx_reference
    */
   constructor(
     tx_id,
@@ -40,7 +41,8 @@ class Transaction {
     payment_method,
     tx_status,
     tx_time,
-    tx_settled
+    tx_settled,
+    tx_reference
   ) {
     this.tx_id = tx_id;
     this.orderid = orderid;
@@ -50,6 +52,7 @@ class Transaction {
     this.tx_status = tx_status;
     this.tx_time = tx_time;
     this.tx_settled = tx_settled;
+    this.tx_reference = tx_reference;
   }
 }
 /**

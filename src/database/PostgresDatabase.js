@@ -595,7 +595,8 @@ class PostgresDatabase extends IDatabase {
       row.payment_method,
       Transaction.Status[row.tx_status.toUpperCase()],
       row.tx_time,
-      row.tx_settle_time
+      row.tx_settle_time,
+      row.tx_reference
     );
   }
   async getTransaction(loginid, txid) {
@@ -619,6 +620,21 @@ class PostgresDatabase extends IDatabase {
         `SELECT * FROM premier.transaction
         WHERE loginid = $1 AND orderid = $2`,
         [loginid, orderid]
+      );
+      return result.rows[0] ?? null;
+    });
+    if (!query_result) {
+      return null;
+    }
+    return this.#constructTransactionFromRow(query_result);
+  }
+
+  async searchTransactionForReference(method, reference) {
+    let query_result = await this.#doConnected(async function (client) {
+      let result = await client.query(
+        `SELECT * FROM premier.transaction
+        WHERE payment_method = $1 AND tx_reference = $2`,
+        [method, reference]
       );
       return result.rows[0] ?? null;
     });

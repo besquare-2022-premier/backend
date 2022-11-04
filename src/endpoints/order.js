@@ -4,6 +4,7 @@
 const { isInteger } = require("@junchan/type-check");
 const express = require("express");
 const DATABASE = require("../database/DBConfig");
+const PROCESSOR = require("../payment_processors/PaymentProcessorConfig");
 const IDatabase = require("../database/IDatabase");
 const AuthenticatedEndpointMiddleware = require("../middlewares/authenticated");
 const { NonCachable, ClientOnlyCacheable } = require("../middlewares/caching");
@@ -295,10 +296,21 @@ app.get(
       return;
     }
     let tx;
-    //TODO commit it
     try {
       tx = await DATABASE.commitUserCart(req.user);
-      tx.amount;
+      //create a transaction session
+      const { session_id, url } = await PROCESSOR.createNewSession(
+        tx.tx_id,
+        tx.amount
+      );
+      //save the session_id for future reference
+      await DATABASE.updateTransactionSubtle(tx.tx_id, {
+        tx_reference: session_id,
+      });
+      //we are done, give them the url back
+      const res = new ResponseBase(NO_ERROR, "OK");
+      res.url = url;
+      sendJsonResponse(res, 200, res);
     } catch (e) {
       console.log(e);
     }

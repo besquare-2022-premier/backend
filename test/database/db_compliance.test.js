@@ -53,7 +53,7 @@ describe("Compliance test on current implementation", () => {
       "Minamoto",
       await randomID(),
       random_email,
-      null,
+      "+601234" + ((Math.random() * 1000000) | 0),
       null,
       "normal",
       "JP",
@@ -66,6 +66,14 @@ describe("Compliance test on current implementation", () => {
     expect(await DATABASE.addUser(user, random_hash)).toBe(true);
     expect(user.loginid).not.toBe(-1);
   });
+  _itif(
+    user.loginid != -1,
+    "isPhoneNumberUsed should return the correct value",
+    async function () {
+      expect(await DATABASE.isPhoneNumberUsed(user.tel_no)).toBe(true);
+      expect(await DATABASE.isPhoneNumberUsed("+60123456889")).toBe(false);
+    }
+  );
   _itif(
     user.loginid != -1,
     "obtainUserPasswordHash should return the correct hash not matter what is passed in",

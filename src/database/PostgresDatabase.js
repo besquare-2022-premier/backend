@@ -251,6 +251,19 @@ class PostgresDatabase extends IDatabase {
     });
   }
 
+  async isPhoneNumberUsed(number) {
+    return await this.#doConnected(async function (client) {
+      return (
+        (
+          await client.query(
+            "SELECT loginid FROM premier.user_details WHERE tel_no=$1",
+            [number]
+          )
+        ).rows.length != 0
+      );
+    });
+  }
+
   async getCategories() {
     let result = await this.#doConnected(async function (client) {
       let result = await client.query(`SELECT * FROM premier.category`);

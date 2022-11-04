@@ -118,6 +118,14 @@ class IDatabase {
   async getUserSecureWord(id) {
     throw new Error("Unimplemented");
   }
+  /**
+   * Query the system weather the phone number is registered
+   * @param {string} number
+   * @returns {Promise<boolean>}
+   */
+  async isPhoneNumberUsed(number) {
+    throw new Error("Unimplemented");
+  }
   /////////////////////////////////////////////////////////////
   //    PRODUCTS
   /////////////////////////////////////////////////////////////

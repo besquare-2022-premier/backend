@@ -12,7 +12,7 @@ const crypto = require("crypto");
  */
 function computeHmacForUrl(path, payload, shared_secret) {
   return crypto
-    .createHmac("sga256", shared_secret)
+    .createHmac("sha256", shared_secret)
     .update(
       JSON.stringify({
         path,
@@ -36,7 +36,7 @@ function verifyHmacForUrl(expected, path, payload, shared_secret) {
   let result = 0;
   let loops = Math.min(expected.length, hash.length);
   for (let i = 0; i < loops; i++) {
-    result = hash.charCodeAt(i) | expected.charCodeAt(i);
+    result |= hash.charCodeAt(i) ^ expected.charCodeAt(i);
   }
   return !result;
 }

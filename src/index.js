@@ -3,8 +3,13 @@ const application = express();
 const cookie_parser = require("cookie-parser");
 const AccessTokenMiddleware = require("./middlewares/access_token");
 const sessionIdMiddleware = require("./middlewares/session_id");
-const { asyncExpressHandler } = require("./endpoints/common_utils");
+const {
+  asyncExpressHandler,
+  sendJsonResponse,
+} = require("./endpoints/common_utils");
 const DATABASE = require("./database/DBConfig");
+const ResponseBase = require("./types/response_base");
+const { INEXISTANT_ENDPOINT, SERVER_FAILURE } = require("./types/error_codes");
 
 application.use(express.json());
 application.use(
@@ -19,6 +24,30 @@ application.use("/api/v1", require("./endpoints/_defs"));
 application.get("/", function (req, res) {
   res.write("Hurray");
   res.end();
+});
+application.use(function (req, res) {
+  sendJsonResponse(
+    res,
+    400,
+    new ResponseBase(
+      INEXISTANT_ENDPOINT,
+      "The endpoint you have specified is not exists"
+    )
+  );
+});
+application.use(function (err, req, res, next) {
+  console.error(err);
+  if (res.headersSent) {
+    return next(err);
+  }
+  sendJsonResponse(
+    res,
+    400,
+    new ResponseBase(
+      SERVER_FAILURE,
+      "Server have encounter an issue while processing the request"
+    )
+  );
 });
 
 if (process.env.JEST_WORKER_ID) {

@@ -278,7 +278,17 @@ class PostgresDatabase extends IDatabase {
     }
     return ret;
   }
-
+  #constructProductFromRow(row) {
+    return new Product(
+      row.productid,
+      row.product_name,
+      row.description,
+      row.stock,
+      row.price,
+      row.category_name,
+      row.image
+    );
+  }
   async getProduct(product_id) {
     let result = await this.#doConnected(async function (client) {
       let result = await client.query(
@@ -292,19 +302,31 @@ class PostgresDatabase extends IDatabase {
       return result.rows[0] ?? null;
     });
     if (!result) return null;
-    //construct the thinf
-    let ret = new Product(
-      result.productid,
-      result.product_name,
-      result.description,
-      result.stock,
-      result.price,
-      result.category_name,
-      result.image
-    );
+    return this.#constructProductFromRow(result);
+  }
+  async getProductMulti(product_ids) {
+    let sanitized_ids = product_ids.map((z) => z | 0);
+    let result = await this.#doConnected(async function (client) {
+      let result = await client.query(
+        `
+      WITH base AS (SELECT * FROM premier.product WHERE productid IN (${sanitized_ids.join(
+        ","
+      )}))
+      SELECT base.*,category_name FROM base INNER JOIN premier.category 
+      USING (categoryid);
+      `
+      );
+      return result.rows ?? null;
+    });
+    if (!result) return null;
+    //remap the result rows to the original order specified in params
+    let ret = Array(product_ids.length).fill(null);
+    for (const row of result) {
+      let entry = this.#constructProductFromRow(row);
+      ret[product_ids.indexOf(entry.product_id)] = entry;
+    }
     return ret;
   }
-
   async getProducts(search, offset = 0, limit = 50, randomize = false) {
     let params = [offset, limit];
     if (search) params.push(`%${search}%`);

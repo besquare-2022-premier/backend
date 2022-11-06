@@ -174,6 +174,15 @@ class IDatabase {
   async getProduct(product_id, bypass_cache = false) {
     throw new Error("Unimplemented");
   }
+  /**
+   * Get the products
+   * @param {number[]} product_ids
+   * @param {boolean} bypass_cache
+   * @returns {Promise<(Product|null)[]>}
+   */
+  async getProductMulti(product_ids, bypass_cache = false) {
+    throw new Error("Unimplemented");
+  }
   /////////////////////////////////////////////////////////////
   //    ORDERS
   /////////////////////////////////////////////////////////////

@@ -14,7 +14,7 @@ const _itif = (status, desc, func) =>
 describe("Compliance test on current implementation", () => {
   beforeAll(() => _ready && DATABASE.init());
   afterAll(() => _ready && DATABASE.shutdown());
-  let products;
+  let products = [];
   _it(
     "The list of product ids returned by getProducts should be in stock",
     async () => {
@@ -25,6 +25,16 @@ describe("Compliance test on current implementation", () => {
         expect(product).toBeTruthy();
         expect(product).not.toBe(0);
       }
+    }
+  );
+  _it(
+    "Provided the same list the getProductsMulti shall yield the same result",
+    async () => {
+      let products = await DATABASE.getProducts();
+      let products_data = await DATABASE.getProductMulti(products);
+      expect(
+        products_data.reduce((prev, cur) => prev && cur.stock !== 0, true)
+      ).toBe(true);
     }
   );
   let verification_code, random_email;
@@ -247,6 +257,13 @@ describe("Compliance test on current implementation", () => {
         (await DATABASE.searchTransactionForOrder(user.loginid, tx.orderid))
           ?.tx_id
       ).toBe(tx.tx_id);
+    }
+  );
+  _itif(
+    user.loginid != -1 && tx.tx_id != -1,
+    "revertTransaction should always succeeded",
+    async function () {
+      expect(await DATABASE.revertTransaction(tx.orderid)).toBe(true);
     }
   );
   _itif(

@@ -61,16 +61,12 @@ app.get(
       page >= 0
         ? await DATABASE.getProducts(q ?? null, offset, limit, !!rnd)
         : [];
-    let products = await Promise.all(
-      ids.map((z) =>
-        DATABASE.getProduct(z).then((r) => {
-          if (!r) {
-            throw new Error(`Cannot fetch the product ${z}`);
-          }
-          return r;
-        })
-      )
-    );
+    let products = await DATABASE.getProductMulti(ids);
+    products.forEach((product, index) => {
+      if (!product) {
+        throw new Error(`Cannot fetch the product ${ids[index]}`);
+      }
+    });
     sendJsonResponse(
       res,
       200,
@@ -124,16 +120,12 @@ app.get(
             !!rnd
           )
         : [];
-    let products = await Promise.all(
-      ids.map((z) =>
-        DATABASE.getProduct(z).then((r) => {
-          if (!r) {
-            throw new Error(`Cannot fetch the product ${z}`);
-          }
-          return r;
-        })
-      )
-    );
+    let products = await DATABASE.getProductMulti(ids);
+    products.forEach((product, index) => {
+      if (!product) {
+        throw new Error(`Cannot fetch the product ${ids[index]}`);
+      }
+    });
     sendJsonResponse(
       res,
       200,

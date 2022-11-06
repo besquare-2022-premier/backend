@@ -219,6 +219,14 @@ class IDatabase {
     throw new Error("Unimplemented");
   }
   /**
+   * Revert the effect of the commitUserCart on an order
+   * @param {number} orderid
+   * @returns {Promise<true>}
+   */
+  async revertTransaction(orderid) {
+    throw new Error("Unimplemented");
+  }
+  /**
    * A function for the database to apply the update without needing to compare the values
    * @param {number} orderid
    * @param {{[key:any]:any}} changes

@@ -586,6 +586,53 @@ class PostgresDatabase extends IDatabase {
       }
     });
   }
+  /**
+   * Revert the effect of the commitUserCart on an order
+   * @param {number} orderid
+   * @returns {Promise<true>}
+   */
+  async revertTransaction(orderid) {
+    //try to get the order id
+    return await this.#doConnected(async function (client) {
+      await client.query("BEGIN");
+      try {
+        //lock the table
+        await client.query(
+          "LOCK TABLE premier.product,premier.orders IN SHARE ROW EXCLUSIVE MODE"
+        );
+        //get all items in the cart
+        let items = (
+          await client.query(
+            `SELECT od.* from premier.order_details AS od WHERE od.orderid=$1;`,
+            [orderid]
+          )
+        ).rows;
+        //lock the rows out
+        await client.query(`
+              SELECT productid,stock FROM
+              premier.product WHERE productid IN (${items
+                .map((z) => z.productid | 0)
+                .join(",")})
+              FOR UPDATE
+        `);
+        //credit back the products where is not -1 (unlimited)
+        await client.query(
+          `with counts as (
+          SELECT * FROM premier.order_details WHERE orderid=$1
+          ) UPDATE premier.product SET stock=stock+counts.quantity
+          FROM counts WHERE counts.productid=product.productid AND stock != -1`,
+          [orderid]
+        );
+        //we are done commit it then
+        await client.query("COMMIT");
+        return true;
+      } catch (e) {
+        await client.query("ROLLBACK");
+        console.log(e);
+        throw e;
+      }
+    });
+  }
   #constructTransactionFromRow(row) {
     return new Transaction(
       row.transactionid,

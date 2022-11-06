@@ -251,6 +251,13 @@ describe("Compliance test on current implementation", () => {
   );
   _itif(
     user.loginid != -1 && tx.tx_id != -1,
+    "revertTransaction should always succeeded",
+    async function () {
+      expect(await DATABASE.revertTransaction(tx.orderid)).toBe(true);
+    }
+  );
+  _itif(
+    user.loginid != -1 && tx.tx_id != -1,
     "updateTransactionSubtle should have effect",
     async function () {
       let changes = {

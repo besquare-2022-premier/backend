@@ -5,6 +5,7 @@ const Product = require("../models/product");
 const User = require("../models/user");
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
+const OutOfStockError = require("../types/OutOfStockError");
 
 // client.query(`select * from premier.user_details`, (err, result) => {
 //   if (!err) {
@@ -576,7 +577,7 @@ class PostgresDatabase extends IDatabase {
             quantities[entry.productid] != -1 &&
             quantities[entry.productid] < entry.quantity
           ) {
-            throw new Error(
+            throw new OutOfStockError(
               "No enough stock for the product id=" + entry.productid
             );
           }

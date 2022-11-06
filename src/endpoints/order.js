@@ -25,6 +25,7 @@ const {
   sendJsonResponse,
   assertJsonRequest,
 } = require("./common_utils");
+const OutOfStockError = require("../types/OutOfStockError");
 
 const app = express.Router();
 app.use(AuthenticatedEndpointMiddleware);
@@ -313,7 +314,15 @@ app.get(
       res.url = url;
       sendJsonResponse(res, 200, res);
     } catch (e) {
-      console.log(e);
+      if (e instanceof OutOfStockError) {
+        sendJsonResponse(
+          res,
+          400,
+          new ResponseBase(ITEMS_OUT_OF_STOCK, e.message)
+        );
+      } else {
+        throw e; //rethrow
+      }
     }
   })
 );

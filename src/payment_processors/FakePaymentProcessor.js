@@ -7,10 +7,10 @@ class FakePaymentProcessor extends IPaymentProcessor {
   constructor() {
     super();
   }
-  async createNewSession(txid, amount) {
+  async createNewSession(txid, loginid, amount) {
     const hmac = computeHmacForUrl(
       "/__callback",
-      { txid },
+      { txid, loginid },
       FakePaymentProcessor.secret
     );
     //prepare a request to the mock backend
@@ -18,7 +18,7 @@ class FakePaymentProcessor extends IPaymentProcessor {
       vendor: "Backend Dev",
       amount: amount,
       currency: "MYR",
-      return_url: `http://localhost:8080/__callback?txid=${txid}&sig=${hmac}`,
+      return_url: `http://localhost:8080/__callback?txid=${txid}&loginid=${loginid}&sig=${hmac}`,
     };
     let res = await fetch(`${MOCK_API_BASE}/session`, {
       body: JSON.stringify(payload),

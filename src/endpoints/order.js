@@ -127,13 +127,14 @@ app.use(NonCachable);
  */
 async function getCart(req, res) {
   const cart = await DATABASE.getUserCart(req.user);
-  const items = await cart.items.map((z) =>
-    DATABASE.getProduct(z.product_id).then((y) => {
-      z.price = y.price; //save db the processing time
-      z.product_name = y.name;
-      z.available = y.stock !== 0;
-      return z;
-    })
+  let items = cart.items;
+  (await DATABASE.getProductMulti(cart.items.map((y) => y.product_id))).forEach(
+    (product, index) => {
+      let handle = items[index];
+      handle.price = product.proce;
+      handle.product_name = product.name;
+      handle.available = product.stock !== 0;
+    }
   );
   sendJsonResponse(res, 200, items);
 }
@@ -308,6 +309,7 @@ app.get(
       //create a transaction session
       const { session_id, url } = await PROCESSOR.createNewSession(
         tx.tx_id,
+        req.user,
         tx.amount
       );
       //save the session_id for future reference

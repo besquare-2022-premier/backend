@@ -25,7 +25,7 @@ class FakePaymentProcessor extends IPaymentProcessor {
       headers: {
         "Content-Type": "application/json",
       },
-      method: "POST",
+      method: "PUT",
     });
     if (!res.ok) {
       throw new Error("Cannot send request to the endpoint");

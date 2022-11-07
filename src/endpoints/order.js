@@ -71,8 +71,12 @@ app.get(
 );
 app.get(
   "/:order_id",
-  asyncExpressHandler(async function (req, res) {
+  asyncExpressHandler(async function (req, res, next) {
     let { order_id } = req.params;
+    if (order_id === "cart") {
+      next();
+      return;
+    }
     if (((order_id |= 0), order_id <= 0)) {
       sendJsonResponse(
         res,
@@ -114,7 +118,6 @@ app.get(
     sendJsonResponse(res, 200, response);
   })
 );
-app.use(CSRFProtectedMiddleware);
 app.use(NonCachable);
 /**
  *
@@ -134,6 +137,7 @@ async function getCart(req, res) {
   sendJsonResponse(res, 200, items);
 }
 app.get("/cart", asyncExpressHandler(getCart));
+app.use(CSRFProtectedMiddleware);
 app.patch(
   "/cart",
   asyncExpressHandler(async function (req, res) {
@@ -171,7 +175,7 @@ app.patch(
         return;
       }
       //we need the stock count
-      const product = await DATABASE.getProduct(changes.product, true);
+      const product = await DATABASE.getProduct(changes.product_id, true);
       if (!product || product.stock === 0) {
         sendJsonResponse(
           res,
@@ -182,7 +186,7 @@ app.patch(
           )
         );
         return;
-      } else if (changes.amount <= 0) {
+      } else if (changes.quantity <= 0) {
         if (
           cart.items.findIndex((z) => z.product_id === changes.product_id) != -1
         ) {
@@ -199,7 +203,7 @@ app.patch(
         );
         return;
       } else {
-        patch_list[changes.product_id] = changes.amount;
+        patch_list[changes.product_id] = changes.quantity;
       }
       await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
       await getCart(req, res);
@@ -321,6 +325,14 @@ app.get(
           new ResponseBase(ITEMS_OUT_OF_STOCK, e.message)
         );
       } else {
+        if (tx) {
+          //terminate the transaction citing the internal exception
+          await DATABASE.updateTransactionSubtle(tx.tx_id, {
+            tx_status: Transaction.Status.CANCELLED,
+            tx_reference: "TERMINATED",
+          });
+          await DATABASE.revertTransaction(tx.orderid);
+        }
         throw e; //rethrow
       }
     }

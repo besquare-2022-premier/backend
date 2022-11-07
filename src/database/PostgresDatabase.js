@@ -470,7 +470,7 @@ class PostgresDatabase extends IDatabase {
     let params = [orderid];
     const map = {
       shipping_address: "ship_address",
-      country: "ship_address",
+      country: "country",
     };
     let details_change = {};
     let i = 2;
@@ -508,9 +508,9 @@ class PostgresDatabase extends IDatabase {
               [orderid, key, val]
             );
           }
-          await client.query("COMMIT");
-          return true;
         }
+        await client.query("COMMIT");
+        return true;
       } catch (e) {
         await client.query("ROLLBACK");
         throw e;
@@ -726,6 +726,7 @@ class PostgresDatabase extends IDatabase {
       payment_method: "payment_method",
       tx_status: "tx_status",
       tx_settle_time: "tx_settle_time",
+      tx_reference: "tx_reference",
     };
     let i = 2;
     for (const key of Object.keys(changes)) {

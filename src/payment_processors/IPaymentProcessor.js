@@ -10,10 +10,11 @@ class IPaymentProcessor {
   /**
    * Create a new payment session
    * @param {number} txid
+   * @param {number} loginid
    * @param {number} amount
-   * @returns {{session_id:string,url:string}}
+   * @returns {Promise<{session_id:string,url:string}>}
    */
-  async createNewSession(txid, amount) {
+  async createNewSession(txid, loginid, amount) {
     throw new Error("Unimplemented");
   }
   /**

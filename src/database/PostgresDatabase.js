@@ -306,6 +306,9 @@ class PostgresDatabase extends IDatabase {
     return this.#constructProductFromRow(result);
   }
   async getProductMulti(product_ids) {
+    if (product_ids.length === 0) {
+      return [];
+    }
     let sanitized_ids = product_ids.map((z) => z | 0);
     let result = await this.#doConnected(async function (client) {
       let result = await client.query(

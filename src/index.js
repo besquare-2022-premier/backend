@@ -21,6 +21,7 @@ application.use(
 application.use(asyncExpressHandler(sessionIdMiddleware));
 application.use(asyncExpressHandler(AccessTokenMiddleware));
 application.use("/api/v1", require("./endpoints/_defs"));
+application.use("/__callback", require("./endpoints/callback"));
 application.get("/", function (req, res) {
   res.write("Hurray");
   res.end();
@@ -42,7 +43,7 @@ application.use(function (err, req, res, next) {
   }
   sendJsonResponse(
     res,
-    400,
+    500,
     new ResponseBase(
       SERVER_FAILURE,
       "Server have encounter an issue while processing the request"

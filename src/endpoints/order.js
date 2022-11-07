@@ -26,6 +26,7 @@ const {
   assertJsonRequest,
 } = require("./common_utils");
 const OutOfStockError = require("../types/OutOfStockError");
+const Transaction = require("../models/transaction");
 
 const app = express.Router();
 app.use(AuthenticatedEndpointMiddleware);

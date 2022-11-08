@@ -62,12 +62,12 @@ app.get(
         time: transaction.tx_time,
         total_amount: transaction.amount,
       });
-      sendJsonResponse(
-        res,
-        200,
-        new PagedResponseBase(offset, page, orders.length, response)
-      );
     }
+    sendJsonResponse(
+      res,
+      200,
+      new PagedResponseBase(offset, page, orders.length, response)
+    );
   })
 );
 app.get(
@@ -109,13 +109,13 @@ app.get(
       transaction_status: transaction.tx_status.description,
       time: transaction.tx_time,
       total_amount: transaction.amount,
-      items: await order.items.map((z) =>
-        DATABASE.getProduct(z.product_id).then((y) => {
-          z.product_name = y.name;
-          return z;
-        })
-      ),
+      items: order.items,
     };
+    (
+      await DATABASE.getProductMulti(response.items.map((z) => z.product_id))
+    ).forEach((product, i) => {
+      response.items[i].product_name = product.name;
+    });
     sendJsonResponse(res, 200, response);
   })
 );
@@ -236,7 +236,7 @@ app.post(
     //get the order
     const { order_id } = req.body;
     const cart = await DATABASE.getUserCart(req.user);
-    if ((order_id | 0, order_id <= 0)) {
+    if (!isInteger(order_id) || order_id < 0) {
       sendJsonResponse(
         res,
         404,
@@ -262,7 +262,7 @@ app.post(
     await getCart(req, res);
   })
 );
-app.get(
+app.post(
   "/cart/checkout",
   asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
@@ -317,9 +317,9 @@ app.get(
         tx_reference: session_id,
       });
       //we are done, give them the url back
-      const res = new ResponseBase(NO_ERROR, "OK");
-      res.url = url;
-      sendJsonResponse(res, 200, res);
+      const response = new ResponseBase(NO_ERROR, "OK");
+      response.url = url;
+      sendJsonResponse(res, 200, response);
     } catch (e) {
       if (e instanceof OutOfStockError) {
         sendJsonResponse(
@@ -333,6 +333,7 @@ app.get(
           await DATABASE.updateTransactionSubtle(tx.tx_id, {
             tx_status: Transaction.Status.CANCELLED,
             tx_reference: "TERMINATED",
+            tx_settle_time: new Date(),
           });
           await DATABASE.revertTransaction(tx.orderid);
         }

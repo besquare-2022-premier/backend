@@ -25,6 +25,7 @@ app.get(
       return;
     }
     txid |= 0;
+    loginid |= 0;
     if (
       !verifyHmacForUrl(
         sig,
@@ -58,7 +59,7 @@ app.get(
     }
     await DATABASE.updateTransactionSubtle(txid, {
       tx_status: status,
-      tx_settled: new Date(),
+      tx_settle_time: new Date(),
     });
     res.status(204).end();
   })

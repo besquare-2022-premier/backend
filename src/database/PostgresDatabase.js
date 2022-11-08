@@ -6,13 +6,7 @@ const User = require("../models/user");
 const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const OutOfStockError = require("../types/OutOfStockError");
-
-// client.query(`select * from premier.user_details`, (err, result) => {
-//   if (!err) {
-//     console.log(result.rows);
-//   }
-//   client.end();
-// });
+const Review = require("../models/review");
 
 class PostgresDatabase extends IDatabase {
   constructor() {
@@ -743,6 +737,39 @@ class PostgresDatabase extends IDatabase {
         WHERE transactionid = $1`;
       await client.query(query, params);
     });
+  }
+  #constructReviewFromRow(row) {
+    return new Review(
+      row.productid,
+      row.loginid,
+      row.product_rating,
+      row.product_review,
+      row.review_time
+    );
+  }
+  async getProductReviews(productid) {
+    let query_result = await this.#doConnected(async function (client) {
+      let result = await client.query(
+        `SELECT * FROM premier.product_review
+        WHERE productid = $1`,
+        [productid]
+      );
+      return result.rows ?? null;
+    });
+    const self = this;
+    return query_result.map((z) => self.#constructReviewFromRow(z));
+  }
+  async addReview(review) {
+    let result = await this.#doConnected(async function (client) {
+      await client.query(
+        `INSERT INTO premier.product_review(
+          productid,loginid, product_rating, product_review
+        )
+        VALUES ($1, $2, $3,$4)`,
+        [review.productid, review.loginid, review.rating, review.review]
+      );
+    });
+    return result !== null;
   }
 }
 

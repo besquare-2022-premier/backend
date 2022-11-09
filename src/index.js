@@ -10,7 +10,29 @@ const {
 const DATABASE = require("./database/DBConfig");
 const ResponseBase = require("./types/response_base");
 const { INEXISTANT_ENDPOINT, SERVER_FAILURE } = require("./types/error_codes");
-
+application.disable("x-powered-by");
+if (process.env.NODE_ENV === "production") {
+  application.set("trust proxy", 2);
+  application.use((req, res, next) => {
+    res.set("Strict-Transport-Security", "max-age=86400");
+    const origin = req.get("Origin");
+    if (
+      ["https://merch-paradise.xyz", "https://www.merch-paradise.xyz"].includes(
+        origin
+      )
+    ) {
+      res.set("Acess-Control-Request-Method", origin);
+      res.set("Vary", "Origin");
+      res.set("Access-Control-Max-Age", "300");
+      res.set(
+        "Access-Control-Allow-Headers",
+        "X-Access-Token,X-CSRF-Token,Content-Type"
+      );
+      res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
+    }
+    next();
+  });
+}
 application.use(express.json());
 application.use(
   cookie_parser(

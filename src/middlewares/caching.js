@@ -22,6 +22,13 @@ function NonCachable(_req, res, next) {
  */
 function ClientOnlyCacheable(age, _req, res, next) {
   res.set("Cache-Control", `private, max-age=${age}, must-revalidate`);
+  let currentVary = res.getHeader("Vary");
+  if (currentVary) {
+    currentVary += ", X-Access-Token";
+  } else {
+    currentVary = "X-Access-Token";
+  }
+  res.set("Vary", currentVary);
   next();
 }
 /**

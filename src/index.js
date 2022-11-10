@@ -21,7 +21,7 @@ if (process.env.NODE_ENV === "production") {
         origin
       )
     ) {
-      res.set("Acess-Control-Request-Method", origin);
+      res.set("Acess-Control-Allow-Origin", origin);
       res.set("Vary", "Origin");
       res.set("Access-Control-Max-Age", "300");
       res.set(
@@ -51,7 +51,7 @@ application.get("/", function (req, res) {
 application.use(function (req, res) {
   sendJsonResponse(
     res,
-    400,
+    404,
     new ResponseBase(
       INEXISTANT_ENDPOINT,
       "The endpoint you have specified is not exists"

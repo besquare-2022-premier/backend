@@ -28,6 +28,7 @@ if (process.env.NODE_ENV === "production") {
         "Access-Control-Allow-Headers",
         "X-Access-Token,X-CSRF-Token,Content-Type"
       );
+      res.set("Access-Control-Allow-Credentials", "true");
       res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
     }
     next();

@@ -33,6 +33,10 @@ if (process.env.NODE_ENV === "production") {
       res.set("Access-Control-Allow-Credentials", "true");
       res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
     }
+    if (req.method === "OPTIONS") {
+      res.status(204).end();
+      return;
+    }
     next();
   });
 }

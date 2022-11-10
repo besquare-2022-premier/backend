@@ -17,6 +17,7 @@ async function sessionIdMiddleware(req, res, next) {
       httpOnly: true,
       signed: true,
       secure: req.secure,
+      sameSite: "none",
     });
     req.session_id = session_id;
   }

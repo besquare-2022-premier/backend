@@ -17,9 +17,11 @@ if (process.env.NODE_ENV === "production") {
     res.set("Strict-Transport-Security", "max-age=86400");
     const origin = req.get("Origin");
     if (
-      ["https://merch-paradise.xyz", "https://www.merch-paradise.xyz"].includes(
-        origin
-      )
+      [
+        "https://merch-paradise.xyz",
+        "https://www.merch-paradise.xyz",
+        "http://localhost:3000",
+      ].includes(origin)
     ) {
       res.set("Access-Control-Allow-Origin", origin);
       res.set("Vary", "Origin");

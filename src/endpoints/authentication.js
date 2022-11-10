@@ -33,6 +33,7 @@ const {
   sendJsonResponse,
 } = require("./common_utils");
 const app = express.Router();
+app.use(NonCachable);
 app.get(
   "/revoke",
   asyncExpressHandler(async function (req, res) {
@@ -43,7 +44,6 @@ app.get(
     res.status(204).end();
   })
 );
-app.use(NonCachable);
 //middleware to prevent the routes to be called on authenticated session
 app.use(function (req, res, next) {
   if (req.user) {

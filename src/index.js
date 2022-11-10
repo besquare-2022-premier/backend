@@ -21,13 +21,14 @@ if (process.env.NODE_ENV === "production") {
         origin
       )
     ) {
-      res.set("Acess-Control-Allow-Origin", origin);
+      res.set("Access-Control-Allow-Origin", origin);
       res.set("Vary", "Origin");
       res.set("Access-Control-Max-Age", "300");
       res.set(
         "Access-Control-Allow-Headers",
         "X-Access-Token,X-CSRF-Token,Content-Type"
       );
+      res.set("Access-Control-Allow-Credentials", "true");
       res.set("Access-Control-Allow-Methods", "GET,POST,PATCH,DELETE");
     }
     next();

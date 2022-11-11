@@ -38,7 +38,19 @@ app.get(
       );
       return;
     }
+    if (!(await DATABASE.getProduct(id))) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
     const review = await DATABASE.getProductReviews(id);
+    console.log(review);
     if (!review) {
       sendJsonResponse(
         res,
@@ -65,11 +77,21 @@ app.post(
       return;
     }
     const { productid, product_rating, product_review } = req.body;
-    console.log(req.body);
     if (!isInteger(productid)) {
       sendJsonResponse(
         res,
-        404,
+        400,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    if (!(await DATABASE.getProduct(productid))) {
+      sendJsonResponse(
+        res,
+        400,
         new ResponseBase(
           INEXISTANT_PRODUCT_ID,
           "Invalid or inexistant product id"

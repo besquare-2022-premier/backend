@@ -327,12 +327,12 @@ class PostgresDatabase extends IDatabase {
   }
   async getProducts(search, offset = 0, limit = 50, randomize = false) {
     let params = [offset, limit];
-    if (search) params.push(`%${search}%`);
+    if (search) params.push(`%${search.toLowerCase()}%`);
     return await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT productid FROM premier.product
         WHERE (stock >0 or stock =-1) ${
-          search ? "  AND product_name LIKE $3  " : ""
+          search ? "  AND LOWER(product_name) LIKE $3  " : ""
         }
         ${randomize ? " ORDER BY RANDOM() " : ""}
         OFFSET $1
@@ -351,13 +351,13 @@ class PostgresDatabase extends IDatabase {
     randomize = false
   ) {
     let params = [category, offset, limit];
-    if (search) params.push(`%${search}%`);
+    if (search) params.push(`%${search.toLowerCase()}%`);
     return await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT productid FROM premier.product
         WHERE categoryid=(SELECT categoryid FROM premier.category WHERE category_name=$1)
           AND (stock > 0 or stock =-1) ${
-            search ? " AND product_name like $4 " : ""
+            search ? " AND LOWER(product_name) like $4 " : ""
           }
           ${randomize ? " ORDER BY RANDOM() " : ""}
         OFFSET $2

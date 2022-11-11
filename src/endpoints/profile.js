@@ -42,7 +42,6 @@ const schema_keys = Object.keys(schema_model_map);
 const app = express.Router();
 app.use(ClientOnlyCacheable.bind(null, 60));
 app.use(AuthenticatedEndpointMiddleware);
-app.use(CSRFProtectedMiddleware);
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
@@ -57,6 +56,7 @@ app.get(
     sendJsonResponse(res, 200, response);
   })
 );
+app.use(CSRFProtectedMiddleware);
 app.patch(
   "/",
   asyncExpressHandler(async function (req, res) {

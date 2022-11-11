@@ -16,6 +16,10 @@
     "nodemailer": "^6.8.0",
     "supertest": "^6.3.1"
   },
+  "naru": {
+    "deploy": "npm i && sudo systemctl restart backend",
+    "tag": "Backend"
+  },
   "dependencies": {
     "@junchan/type-check": "github:besquare-2022-premier/type-check#1.0.3",
     "bcrypt": "^5.1.0",

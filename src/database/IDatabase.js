@@ -3,6 +3,7 @@ const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const User = require("../models/user");
 const Product = require("../models/product");
+const Review = require("../models/review");
 
 /**
  * Interface for the database adapter to the rest of the application
@@ -279,6 +280,20 @@ class IDatabase {
    * @param {{[key:any]:any}} changes
    */
   async updateTransactionSubtle(txid, changes) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the reviews of a product with productid
+   * @param {number} productid
+   */
+  async getProductReviews(productid) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Add review
+   * @param {Review} review
+   */
+  async addReview(review) {
     throw new Error("Unimplemented");
   }
 }

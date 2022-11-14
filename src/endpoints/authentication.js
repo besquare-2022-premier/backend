@@ -23,6 +23,7 @@ const {
   ALREADY_REGISTERED,
   AUTH_FAILED,
   NO_REAUTH,
+  PASSWORD_TOO_WEAK,
 } = require("../types/error_codes");
 const ResponseBase = require("../types/response_base");
 const SecureWordResponse = require("../types/secure_word_response");
@@ -31,6 +32,7 @@ const {
   assertJsonRequest,
   validEmail,
   sendJsonResponse,
+  validPassword,
 } = require("./common_utils");
 const app = express.Router();
 app.use(NonCachable);

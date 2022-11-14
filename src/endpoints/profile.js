@@ -17,12 +17,14 @@ const {
   UNMATCHED_PASSWORD,
   ALREADY_REGISTERED,
   NO_ERROR,
+  PASSWORD_TOO_WEAK,
 } = require("../types/error_codes");
 const ResponseBase = require("../types/response_base");
 const {
   asyncExpressHandler,
   sendJsonResponse,
   assertJsonRequest,
+  validPassword,
 } = require("./common_utils");
 
 const schema_model_map = {
@@ -229,6 +231,17 @@ app.post(
         new ResponseBase(
           REQUIRED_FIELD_MISSING,
           "new_password_again field is empty"
+        )
+      );
+      return;
+    }
+    if (!validPassword(new_password)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          PASSWORD_TOO_WEAK,
+          "Password given too weak. It should consists of mixed case of letters, digits and a special character"
         )
       );
       return;

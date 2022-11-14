@@ -223,6 +223,18 @@ app.post(
       );
       return;
     }
+    //check password strength
+    if (!validPassword(req.body.password)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(
+          PASSWORD_TOO_WEAK,
+          "Password given too weak. It should consists of mixed case of letters, digits and a special character"
+        )
+      );
+      return;
+    }
     //process the registration now!!!
     //hash the password
     const password_hash = await hash(req.body.password, BCRYPT_ROUNDS);

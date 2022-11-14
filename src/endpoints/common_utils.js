@@ -49,9 +49,15 @@ function assertJsonRequest(req, res) {
 function validEmail(email) {
   return /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
 }
+function validPassword(password) {
+  return /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%^&*()=+-\/\.]).{8,}/.test(
+    password
+  );
+}
 module.exports = {
   asyncExpressHandler,
   assertJsonRequest,
   validEmail,
   sendJsonResponse,
+  validPassword,
 };

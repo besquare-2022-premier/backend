@@ -47,7 +47,7 @@ app.get(
 );
 app.use(PubliclyCacheable.bind(null, 600));
 app.get(
-  "/product/:id",
+  "/item/:id",
   asyncExpressHandler(async function (req, res) {
     let { id } = req.params;
     if (((id |= 0), id <= 0)) {

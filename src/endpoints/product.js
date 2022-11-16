@@ -47,6 +47,36 @@ app.get(
 );
 app.use(PubliclyCacheable.bind(null, 600));
 app.get(
+  "/product/:id",
+  asyncExpressHandler(async function (req, res) {
+    let { id } = req.params;
+    if (((id |= 0), id <= 0)) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    const product = await DATABASE.getProduct(id, true);
+    if (!product || product.stock === 0) {
+      sendJsonResponse(
+        res,
+        404,
+        new ResponseBase(
+          INEXISTANT_PRODUCT_ID,
+          "Invalid or inexistant product id"
+        )
+      );
+      return;
+    }
+    sendJsonResponse(res, 200, product);
+  })
+);
+app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
     let { q, page, limit, rnd } = req.query;

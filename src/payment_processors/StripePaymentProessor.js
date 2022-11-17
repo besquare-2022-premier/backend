@@ -53,10 +53,9 @@ class StripePaymentProcessor extends IPaymentProcessor {
       expand: ["payment_intent"],
     });
     //check some explicit flags
-    if (session.status === "expired") {
-      return Transaction.Status.FAILED;
-    } else if (session.status === "open") {
-      return Transaction.Status.CREATED;
+    const preprocessed = this.preprocessSessionStatus(session);
+    if (preprocessed) {
+      return preprocessed;
     }
     //if the is completed check the payment intent itself for more info
     //map the payment_intent status into the internal status
@@ -67,6 +66,15 @@ class StripePaymentProcessor extends IPaymentProcessor {
         return Transaction.Status.SUCCEEDED;
       default:
         return Transaction.Status.CREATED;
+    }
+  }
+  preprocessSessionStatus(session) {
+    if (session.status === "expired") {
+      return Transaction.Status.FAILED;
+    } else if (session.status === "open") {
+      return Transaction.Status.CREATED;
+    } else {
+      return null;
     }
   }
 }

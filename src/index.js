@@ -40,6 +40,10 @@ if (process.env.NODE_ENV === "production") {
     }
     next();
   });
+  application.use(
+    "/__stripe_hook",
+    require("./payment_processors/StripePaymentProcessorWebhook")
+  );
 }
 application.use(express.json());
 application.use(

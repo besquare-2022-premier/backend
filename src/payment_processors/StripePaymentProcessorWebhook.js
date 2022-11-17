@@ -56,7 +56,10 @@ app.post(
             res.status(400).send(`Webhook Error: Missing metadata`);
             return;
           }
-          await DATABASE.updateTransactionSubtle(txid, { tx_status: status });
+          await DATABASE.updateTransactionSubtle(txid, {
+            tx_status: status,
+            tx_settle_time: new Date(),
+          });
         }
         break;
       default:

@@ -98,7 +98,7 @@ app.post(
     await SMTPProvider.sendEmail(
       email,
       "Welcome to merch paradise",
-      `Click <a href="http://localhost:3000/finalize-sign-up?code=${verification_code}">here</a> to complete the sign up`
+      `Click <a href="https://www.merch-paradise.xyz/finalize-sign-up?code=${verification_code}">here</a> to complete the sign up`
     );
     //we are done, ask users to check their mailbox
     sendJsonResponse(

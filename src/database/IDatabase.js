@@ -285,6 +285,7 @@ class IDatabase {
   /**
    * Get the reviews of a product with productid
    * @param {number} productid
+   * @returns {Promise<Review[]>}
    */
   async getProductReviews(productid) {
     throw new Error("Unimplemented");

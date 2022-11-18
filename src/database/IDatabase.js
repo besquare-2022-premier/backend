@@ -307,17 +307,21 @@ class IDatabase {
   /**
    * Get the community messages which belonging to the topic
    * @param {string} topic The topic which the messages should be obtained
+   * @param {number} offset
+   * @param {number} limit
    * @returns {Promise<CommunityMessage[]>}
    */
-  async getCommunityMessageForTopic(topic) {
+  async getCommunityMessageForTopic(topic, offset = 0, limit = 50) {
     throw new Error("Unimplemented");
   }
   /**
    * Get the replies for the message
    * @param {number} message_id The id of the message that its replies should be obtained
+   * @param {number} offset
+   * @param {number} limit
    * @returns {Promise<CommunityMessage[]>}
    */
-  async getCommunityRepliesForMessage(message_id) {
+  async getCommunityRepliesForMessage(message_id, offset = 0, limit = 50) {
     throw new Error("Unimplemented");
   }
   /**

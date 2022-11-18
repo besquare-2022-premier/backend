@@ -4,6 +4,7 @@ const Transaction = require("../models/transaction");
 const User = require("../models/user");
 const Product = require("../models/product");
 const Review = require("../models/review");
+const CommunityMessage = require("../models/community_message");
 
 /**
  * Interface for the database adapter to the rest of the application
@@ -307,17 +308,21 @@ class IDatabase {
   /**
    * Get the community messages which belonging to the topic
    * @param {string} topic The topic which the messages should be obtained
+   * @param {number} offset
+   * @param {number} limit
    * @returns {Promise<CommunityMessage[]>}
    */
-  async getCommunityMessageForTopic(topic) {
+  async getCommunityMessageForTopic(topic, offset = 0, limit = 50) {
     throw new Error("Unimplemented");
   }
   /**
    * Get the replies for the message
    * @param {number} message_id The id of the message that its replies should be obtained
+   * @param {number} offset
+   * @param {number} limit
    * @returns {Promise<CommunityMessage[]>}
    */
-  async getCommunityRepliesForMessage(message_id) {
+  async getCommunityRepliesForMessage(message_id, offset = 0, limit = 50) {
     throw new Error("Unimplemented");
   }
   /**
@@ -326,6 +331,22 @@ class IDatabase {
    * @returns {Promise<true>}
    */
   async addCommunityMessage(message) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the community message
+   * @param {number} message_id
+   * @returns {Promise<CommunityMessage|null>}
+   */
+  async getCommunityMessage(message_id) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Check weather the topic is exists
+   * @param {string} topic
+   * @returns {Promise<boolean>}
+   */
+  async isCommunityTopicExists(topic) {
     throw new Error("Unimplemented");
   }
 }

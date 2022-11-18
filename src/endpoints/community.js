@@ -85,11 +85,8 @@ app.get(
     if (((message |= 0), message <= 0)) {
       sendJsonResponse(
         res,
-        400,
-        new ResponseBase(
-          INEXISTANT_TOPIC_OR_MESSAGE,
-          "The message id is invalid"
-        )
+        404,
+        new ResponseBase(INEXISTANT_TOPIC_OR_MESSAGE, "Message not found")
       );
       return;
     }
@@ -130,11 +127,8 @@ app.get(
     if (((message |= 0), message <= 0)) {
       sendJsonResponse(
         res,
-        400,
-        new ResponseBase(
-          INEXISTANT_TOPIC_OR_MESSAGE,
-          "The message id is invalid"
-        )
+        404,
+        new ResponseBase(INEXISTANT_TOPIC_OR_MESSAGE, "Message not found")
       );
       return;
     }
@@ -222,6 +216,70 @@ app.post("/:topic", async function (req, res) {
     message,
     new Date(),
     null
+  );
+  await DATABASE.addCommunityMessage(obj);
+  sendJsonResponse(res, 200, new ResponseBase(NO_ERROR, "OK"));
+});
+app.post("/:topic/:message_id", async function (req, res) {
+  if (!assertJsonRequest(req, res)) {
+    return;
+  }
+  const { topic } = req.params;
+  let { message_id } = req.params;
+  if (!topic) {
+    sendJsonResponse(
+      res,
+      400,
+      new ResponseBase(UNPROCESSABLE_ENTITY, "No topic for the endpoint")
+    );
+    return;
+  }
+  if (((message_id |= 0), message_id <= 0)) {
+    sendJsonResponse(
+      res,
+      404,
+      new ResponseBase(INEXISTANT_TOPIC_OR_MESSAGE, "Message not found")
+    );
+    return;
+  }
+  let { message } = req.body;
+  if (!isString(message)) {
+    sendJsonResponse(
+      res,
+      400,
+      new ResponseBase(REQUIRED_FIELD_MISSING, "Field message required")
+    );
+    return;
+  }
+  if (await DATABASE.isCommunityTopicExists(topic)) {
+    sendJsonResponse(
+      res,
+      404,
+      new ResponseBase(INEXISTANT_TOPIC_OR_MESSAGE, "Topic not found")
+    );
+    return;
+  }
+  //check for the message also
+  let message_obj = await DATABASE.getCommunityMessage(message_id);
+  if (!message_obj || message_obj.topic !== topic) {
+    sendJsonResponse(
+      res,
+      404,
+      new ResponseBase(INEXISTANT_TOPIC_OR_MESSAGE, "Message not found")
+    );
+    return;
+  }
+  //strip all html tags whenever possible
+  message = message.replace(nuke_html_regex, "");
+  //construct the object
+  const obj = new CommunityMessage(
+    -1,
+    topic,
+    req.user,
+    "",
+    message,
+    new Date(),
+    message_id
   );
   await DATABASE.addCommunityMessage(obj);
   sendJsonResponse(res, 200, new ResponseBase(NO_ERROR, "OK"));

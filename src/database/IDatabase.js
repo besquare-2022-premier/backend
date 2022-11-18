@@ -285,6 +285,7 @@ class IDatabase {
   /**
    * Get the reviews of a product with productid
    * @param {number} productid
+   * @returns {Promise<Review[]>}
    */
   async getProductReviews(productid) {
     throw new Error("Unimplemented");
@@ -294,6 +295,37 @@ class IDatabase {
    * @param {Review} review
    */
   async addReview(review) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get all the community topics which supported by the system
+   * @returns {Promise<string[]>}
+   */
+  async getCommunityTopics() {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the community messages which belonging to the topic
+   * @param {string} topic The topic which the messages should be obtained
+   * @returns {Promise<CommunityMessage[]>}
+   */
+  async getCommunityMessageForTopic(topic) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the replies for the message
+   * @param {number} message_id The id of the message that its replies should be obtained
+   * @returns {Promise<CommunityMessage[]>}
+   */
+  async getCommunityRepliesForMessage(message_id) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Add a message into the database
+   * @param {CommunityMessage} message The message to be added
+   * @returns {Promise<true>}
+   */
+  async addCommunityMessage(message) {
     throw new Error("Unimplemented");
   }
 }

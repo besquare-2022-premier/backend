@@ -4,6 +4,7 @@ const Transaction = require("../models/transaction");
 const User = require("../models/user");
 const Product = require("../models/product");
 const Review = require("../models/review");
+const CommunityMessage = require("../models/community_message");
 
 /**
  * Interface for the database adapter to the rest of the application
@@ -330,6 +331,22 @@ class IDatabase {
    * @returns {Promise<true>}
    */
   async addCommunityMessage(message) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Get the community message
+   * @param {number} message_id
+   * @returns {Promise<CommunityMessage|null>}
+   */
+  async getCommunityMessage(message_id) {
+    throw new Error("Unimplemented");
+  }
+  /**
+   * Check weather the topic is exists
+   * @param {string} topic
+   * @returns {Promise<boolean>}
+   */
+  async isCommunityTopicExists(topic) {
     throw new Error("Unimplemented");
   }
 }

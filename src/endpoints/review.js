@@ -49,22 +49,11 @@ app.get(
       );
       return;
     }
-    const review = await DATABASE.getProductReviews(id);
-    console.log(review);
-    if (!review) {
-      sendJsonResponse(
-        res,
-        404,
-        new ResponseBase(
-          INEXISTANT_PRODUCT_ID,
-          "Invalid or inexistant product id"
-        )
-      );
-      return;
+    const reviews = await DATABASE.getProductReviews(id);
+    for (const review of reviews) {
+      delete review.loginid;
     }
-    let response = new ResponseBase(NO_ERROR);
-    response = review;
-    sendJsonResponse(res, 200, response);
+    sendJsonResponse(res, 200, reviews);
   })
 );
 app.use(AuthenticatedEndpointMiddleware);
@@ -119,7 +108,7 @@ app.post(
       return;
     }
     await DATABASE.addReview(
-      new Review(productid, req.user, product_rating, product_review)
+      new Review(productid, req.user, "", product_rating, product_review)
     );
     sendJsonResponse(res, 200, new ResponseBase(NO_ERROR, "OK"));
   })

@@ -743,6 +743,7 @@ class PostgresDatabase extends IDatabase {
     return new Review(
       row.productid,
       row.loginid,
+      row.username,
       row.product_rating,
       row.product_review,
       row.review_time
@@ -751,7 +752,8 @@ class PostgresDatabase extends IDatabase {
   async getProductReviews(productid) {
     let query_result = await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT * FROM premier.product_review
+        `SELECT pr.*,u.username FROM premier.product_review as pr INNER JOIN 
+        premier.user_details as u using (loginid)
         WHERE productid = $1`,
         [productid]
       );

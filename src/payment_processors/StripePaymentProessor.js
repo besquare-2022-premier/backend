@@ -38,6 +38,7 @@ class StripePaymentProcessor extends IPaymentProcessor {
             unit_amount_decimal: amount,
             tax_behavior: "inclusive",
           },
+          quantity: 1,
         },
       ],
       metadata: {

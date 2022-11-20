@@ -75,7 +75,7 @@ app.get(
       await DATABASE.revertTransaction(tx.orderid);
     }
     await DATABASE.updateTransactionSubtle(txid, {
-      tx_status: status,
+      tx_status: resolution === "void" ? Transaction.Status.CANCELLED : status,
       tx_settle_time: new Date(),
     });
     res.status(204).end();

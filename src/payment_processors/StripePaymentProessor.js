@@ -77,6 +77,9 @@ class StripePaymentProcessor extends IPaymentProcessor {
       return null;
     }
   }
+  get name() {
+    return "Stripe";
+  }
 }
 
 module.exports = StripePaymentProcessor;

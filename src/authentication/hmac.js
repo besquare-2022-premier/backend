@@ -35,6 +35,7 @@ function verifyHmacForUrl(expected, path, payload, shared_secret) {
   let hash = computeHmacForUrl(path, payload, shared_secret);
   let result = 0;
   let loops = Math.min(expected.length, hash.length);
+  result |= expected.length ^ hash.length;
   for (let i = 0; i < loops; i++) {
     result |= hash.charCodeAt(i) ^ expected.charCodeAt(i);
   }

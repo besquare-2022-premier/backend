@@ -28,16 +28,18 @@ class StripePaymentProcessor extends IPaymentProcessor {
     const session = await stripe.checkout.sessions.create({
       success_url: url,
       cancel_url: url,
-      line_items: {
-        price_data: {
-          currency: "MYR",
-          product_data: {
-            name: "Merch paradise item checkout",
+      line_items: [
+        {
+          price_data: {
+            currency: "MYR",
+            product_data: {
+              name: "Merch paradise item checkout",
+            },
+            unit_amount_decimal: amount / 100,
+            tax_behavior: "inclusive",
           },
-          unit_amount_decimal: amount / 100,
-          tax_behavior: "inclusive",
         },
-      },
+      ],
       metadata: {
         txid,
         loginid,

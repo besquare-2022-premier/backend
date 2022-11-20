@@ -50,7 +50,7 @@ app.post(
     switch (event.type) {
       case "checkout.session.expired":
       //a checkout is expired, fall through as the code are similar
-      case "checkout.session.completed":
+      case "checkout.session.completed": {
         //a checkout is completed, its trigger the database update on this
         let session = event.data.object;
         let status = PaymentProcessor.preprocessSessionStatus(session);
@@ -76,6 +76,7 @@ app.post(
           }
         }
         break;
+      }
       default:
         console.log(`Unhandled event type ${event.type}`);
     }

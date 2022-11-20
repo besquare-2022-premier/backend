@@ -18,16 +18,23 @@ if (!process.env.CALLBACK_SECRET) {
 }
 class StripePaymentProcessor extends IPaymentProcessor {
   async createNewSession(txid, loginid, amount) {
-    const hmac = computeHmacForUrl(
+    let hmac = computeHmacForUrl(
       "/__callback",
-      { txid, loginid },
+      { txid, loginid, resolution: "pass" },
       process.env.CALLBACK_SECRET
     );
-    const url = `https://api.merch-paradise.xyz/__callback?txid=${txid}&loginid=${loginid}&sig=${hmac}`;
+    const BASE_URL = `https://api.merch-paradise.xyz/__callback?txid=${txid}&loginid=${loginid}`;
+    let success_url = `${BASE_URL}&resolution=pass&sig=${hmac}`;
+    hmac = computeHmacForUrl(
+      "/__callback",
+      { txid, loginid, resolution: "void" },
+      process.env.CALLBACK_SECRET
+    );
+    let cancel_url = `${BASE_URL}&resolution=void&sig=${hmac}`;
     //construct a request to the stripe
     const session = await stripe.checkout.sessions.create({
-      success_url: url,
-      cancel_url: url,
+      success_url,
+      cancel_url,
       line_items: [
         {
           price_data: {
@@ -78,6 +85,13 @@ class StripePaymentProcessor extends IPaymentProcessor {
       return Transaction.Status.CREATED;
     } else {
       return null;
+    }
+  }
+  async destroySession(session_id) {
+    try {
+      await stripe.checkout.sessions.expire(session_id);
+    } catch (e) {
+      console.error(e);
     }
   }
   get name() {

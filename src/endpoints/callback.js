@@ -10,13 +10,22 @@ const { asyncExpressHandler, sendJsonResponse } = require("./common_utils");
 const DATABASE = require("../database/DBConfig");
 const PROCESSOR = require("../payment_processors/PaymentProcessorConfig");
 const Transaction = require("../models/transaction");
+const { inEnumeration } = require("@junchan/type-check");
 const app = express.Router();
 app.get(
   "/",
   asyncExpressHandler(async function (req, res) {
     //authenticate the request first
-    let { txid, loginid, sig } = req.query;
+    let { txid, loginid, sig, resolution } = req.query;
     if ((txid | 0) != txid || !sig || (loginid | 0) != loginid) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(UNPROCESSABLE_ENTITY, "Not a valid callback!")
+      );
+      return;
+    }
+    if (resolution && !inEnumeration(resolution, ["pass", "void"])) {
       sendJsonResponse(
         res,
         400,
@@ -30,7 +39,7 @@ app.get(
       !verifyHmacForUrl(
         sig,
         req.baseUrl,
-        { txid, loginid },
+        { txid, loginid, resolution },
         process.env.CALLBACK_SECRET ?? "BACKEND_PREMIER_OPS_TEST"
       )
     ) {
@@ -52,6 +61,11 @@ app.get(
     if (tx.tx_status !== Transaction.Status.CREATED) {
       res.status(204).end(); //dont process it anymore
     }
+    //when the resolution provided is void
+    //void the transaction
+    if (resolution === "void") {
+      await PROCESSOR.destroySession(ref);
+    }
     let status = await PROCESSOR.querySessionStatus(ref);
     //commit the status
     if (status === Transaction.Status.CREATED) {
@@ -61,7 +75,7 @@ app.get(
       await DATABASE.revertTransaction(tx.orderid);
     }
     await DATABASE.updateTransactionSubtle(txid, {
-      tx_status: status,
+      tx_status: resolution === "void" ? Transaction.Status.CANCELLED : status,
       tx_settle_time: new Date(),
     });
     res.status(204).end();

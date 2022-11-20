@@ -45,7 +45,7 @@ class StripePaymentProcessor extends IPaymentProcessor {
         loginid,
       },
       mode: "payment",
-      expires_at: new Date().getTime() / 1000 + 1800,
+      expires_at: (new Date().getTime() / 1000 + 1800) | 0,
     });
     return { session_id: session.id, url: session.url };
   }

@@ -5,6 +5,7 @@ const StripePaymentProcessor = require("./StripePaymentProessor");
 const Stripe = require("stripe");
 const stripe = Stripe(process.env.STRIPE_API_KEY);
 const DATABASE = require("../database/DBConfig");
+const Transaction = require("../models/transaction");
 
 if (!(PaymentProcessor instanceof StripePaymentProcessor)) {
   throw new Error(
@@ -55,15 +56,24 @@ app.post(
         let status = PaymentProcessor.preprocessSessionStatus(session);
         if (status) {
           //update the database
-          let { txid } = session.metadata;
-          if (!txid) {
+          let { txid, loginid } = session.metadata;
+          if (!txid || !loginid) {
             res.status(400).send(`Webhook Error: Missing metadata`);
             return;
           }
-          await DATABASE.updateTransactionSubtle(txid, {
-            tx_status: status,
-            tx_settle_time: new Date(),
-          });
+          //query the database for the current status
+          const tx = await DATABASE.getTransaction(loginid, txid);
+          if (!tx) {
+            console.log("Cannot find tx?? Bug?");
+          } else {
+            //update when it is unknown
+            if (tx.tx_status === Transaction.Status.CREATED) {
+              await DATABASE.updateTransactionSubtle(txid, {
+                tx_status: status,
+                tx_settle_time: new Date(),
+              });
+            }
+          }
         }
         break;
       default:

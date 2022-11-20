@@ -2,6 +2,8 @@ const express = require("express");
 const { asyncExpressHandler } = require("../endpoints/common_utils");
 const PaymentProcessor = require("./PaymentProcessorConfig");
 const StripePaymentProcessor = require("./StripePaymentProessor");
+const Stripe = require("stripe");
+const stripe = Stripe(process.env.STRIPE_API_KEY);
 const DATABASE = require("../database/DBConfig");
 
 if (!(PaymentProcessor instanceof StripePaymentProcessor)) {

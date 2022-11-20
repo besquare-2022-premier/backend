@@ -386,7 +386,9 @@ class PostgresDatabase extends IDatabase {
     return await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT * from premier.orders
-        WHERE loginid = $1 ORDER BY orderid DESC`,
+        WHERE loginid = $1 AND NOT EXISTS
+        (SELECT t.orderid FROM premier.transaction AS t
+        WHERE o.orderid = t.orderid) ORDER BY orderid DESC`,
         [loginid]
       );
       return result.rows.map((z) => self.#constructOrderFromRow(z)) ?? null;

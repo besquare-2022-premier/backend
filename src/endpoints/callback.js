@@ -49,6 +49,9 @@ app.get(
     if (!ref) {
       throw new Error("No reference id");
     }
+    if (tx.tx_status !== Transaction.Status.CREATED) {
+      res.status(204).end(); //dont process it anymore
+    }
     let status = await PROCESSOR.querySessionStatus(ref);
     //commit the status
     if (status === Transaction.Status.CREATED) {

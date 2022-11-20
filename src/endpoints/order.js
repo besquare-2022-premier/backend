@@ -315,6 +315,7 @@ app.post(
       //save the session_id for future reference
       await DATABASE.updateTransactionSubtle(tx.tx_id, {
         tx_reference: session_id,
+        payment_method: PROCESSOR.name ?? "INTERNAL",
       });
       //we are done, give them the url back
       const response = new ResponseBase(NO_ERROR, "OK");

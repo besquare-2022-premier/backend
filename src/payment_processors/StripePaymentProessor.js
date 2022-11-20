@@ -35,7 +35,7 @@ class StripePaymentProcessor extends IPaymentProcessor {
             product_data: {
               name: "Merch paradise item checkout",
             },
-            unit_amount_decimal: amount / 100,
+            unit_amount_decimal: amount,
             tax_behavior: "inclusive",
           },
         },

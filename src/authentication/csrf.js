@@ -5,7 +5,7 @@
 const { randomID } = require("./utils");
 const use_redis = process.env.REDIS_HOST && process.env.REDIS_PASS;
 const validity = 60;
-const REDIS = require("../redis/RedisStore");
+const REDIS = use_redis ? require("../redis/RedisStore") : {};
 class CSRFTokenInfo {
   /**
    * @param {string} owner The base token which the token was bound to

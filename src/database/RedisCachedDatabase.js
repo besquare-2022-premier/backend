@@ -8,6 +8,7 @@ const redisKeyAccessToken = (k) => `access_token$$$${k}`;
 const redisKeyUserOrder = (k) => `user_order$$$${k}`;
 const redisKeyUserCart = (k) => `user_cart$$$${k}`;
 const redisKeyProductId = (k) => `product$$$${k}`;
+const redisKeyUserOrderDetailed = (u, i) => `user_order$${u}$${i}`;
 class RedisCachedDatabase extends PostgresDatabase {
   constructor() {
     super();
@@ -244,6 +245,20 @@ class RedisCachedDatabase extends PostgresDatabase {
     );
   }
   /**
+   * Get the specific order of the user, the order details are expanded in this call
+   * @param {number} loginid
+   * @param {number} orderid
+   * @returns {Promise<Order>}
+   */
+  async getUserOrder(loginid, orderid) {
+    return await REDIS.getOrSet(
+      redisKeyUserOrderDetailed(loginid, orderid),
+      () => super.getUserOrder(loginid, orderid),
+      general_validity / 2,
+      general_validity
+    );
+  }
+  /**
    * Commit the cart
    * @param {number} loginid
    * @returns {Promise<Transaction>}
@@ -278,6 +293,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     await Promise.all([
       super.updateOrderSubtle(loginid, orderid, changes),
       REDIS.invalidate(redisKeyUserOrder(loginid)),
+      REDIS.invalidate(redisKeyUserOrderDetailed(loginid, orderid)),
     ]);
   }
   /**

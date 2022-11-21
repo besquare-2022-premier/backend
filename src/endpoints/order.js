@@ -131,7 +131,7 @@ async function getCart(req, res) {
   (await DATABASE.getProductMulti(cart.items.map((y) => y.product_id))).forEach(
     (product, index) => {
       let handle = items[index];
-      handle.price = product.proce;
+      handle.unit_price = product.price;
       handle.product_name = product.name;
       handle.available = product.stock !== 0;
     }

@@ -139,7 +139,7 @@ async function getCart(req, res) {
   sendJsonResponse(res, 200, items);
 }
 app.get("/cart", asyncExpressHandler(getCart));
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.patch(
   "/cart",
   asyncExpressHandler(async function (req, res) {
@@ -335,7 +335,7 @@ app.post(
             tx_reference: "TERMINATED",
             tx_settle_time: new Date(),
           });
-          await DATABASE.revertTransaction(tx.orderid);
+          await DATABASE.revertTransaction(tx.loginid, tx.orderid);
         }
         throw e; //rethrow
       }

@@ -55,7 +55,7 @@ app.get(
       throw new Error("Unfinalized transaction");
     } else if (status !== Transaction.Status.SUCCEEDED) {
       //revert the order
-      await DATABASE.revertTransaction(tx.orderid);
+      await DATABASE.revertTransaction(tx.loginid, tx.orderid);
     }
     await DATABASE.updateTransactionSubtle(txid, {
       tx_status: status,

@@ -201,7 +201,7 @@ describe("Compliance test on current implementation", () => {
       //issue the change
       let change = {};
       change[id] = 10;
-      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
       //perform the check
       cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.find((z) => z.product_id === id)?.quantity).toBe(10);
@@ -215,7 +215,7 @@ describe("Compliance test on current implementation", () => {
       let change = {};
       change[id] = IDatabase.DELETED;
       //issue the change
-      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
       //perform the check
       cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.findIndex((z) => z.product_id === id)).toBe(-1);
@@ -229,7 +229,7 @@ describe("Compliance test on current implementation", () => {
     //issue the change
     let change = {};
     change[id] = 10;
-    await DATABASE.updateOrderSubtle(cart.orderid, change);
+    await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
     tx = await DATABASE.commitUserCart(user.loginid);
     //we need it for reference
     cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
@@ -263,7 +263,9 @@ describe("Compliance test on current implementation", () => {
     user.loginid != -1 && tx.tx_id != -1,
     "revertTransaction should always succeeded",
     async function () {
-      expect(await DATABASE.revertTransaction(tx.orderid)).toBe(true);
+      expect(await DATABASE.revertTransaction(user.loginid, tx.orderid)).toBe(
+        true
+      );
     }
   );
   _itif(

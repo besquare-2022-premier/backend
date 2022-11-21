@@ -58,7 +58,7 @@ app.get(
     sendJsonResponse(res, 200, response);
   })
 );
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.patch(
   "/",
   asyncExpressHandler(async function (req, res) {

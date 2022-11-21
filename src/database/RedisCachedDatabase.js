@@ -199,7 +199,9 @@ class RedisCachedDatabase extends PostgresDatabase {
       product_ids.map((z) => REDIS.getOrSet(redisKeyProductId(z)))
     );
     //find out the missings
-    let unresolved = preattempt.filter((z) => !z).map((_, i) => product_ids[i]);
+    let unresolved = preattempt
+      .map((_, i) => product_ids[i])
+      .filter((_, i) => !preattempt[i]);
     let resolve = await super.getProductMulti(unresolved, true).then((y) =>
       y.map((z, i) => {
         REDIS.set(redisKeyProductId(unresolved[i]), z, general_validity);

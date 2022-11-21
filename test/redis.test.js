@@ -7,7 +7,7 @@ const _it = _ready ? it : xit;
 const _itif = (status, desc, func) =>
   status ? _it(desc, func) : xit(desc, func);
 describe("Test on redis", () => {
-  beforeEach(async () => {
+  beforeAll(async () => {
     await REDIS.connector.flushall();
   });
   afterAll(async () => {

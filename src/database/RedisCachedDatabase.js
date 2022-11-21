@@ -1,83 +1,43 @@
-/* eslint no-unused-vars: 0 */
-const Order = require("../models/order");
-const Transaction = require("../models/transaction");
-const User = require("../models/user");
-const Product = require("../models/product");
-const Review = require("../models/review");
-
-/**
- * Interface for the database adapter to the rest of the application
- */
-class IDatabase {
-  constructor() {}
+const PostgresDatabase = require("./PostgresDatabase");
+const REDIS = require("../redis/RedisStore");
+const token_validity = 3600;
+const general_validity = 360;
+const redisKeyUser = (k) => `user$$$${k}`;
+const redisKeyReview = (k) => `review$$$${k}`;
+const redisKeyAccessToken = (k) => `access_token$$$${k}`;
+const redisKeyUserOrder = (k) => `user_order$$$${k}`;
+const redisKeyUserCart = (k) => `user_cart$$$${k}`;
+const redisKeyProductId = (k) => `product$$$${k}`;
+class RedisCachedDatabase extends PostgresDatabase {
+  constructor() {
+    super();
+  }
   /////////////////////////////////////////////////////////////
   //    DATABASE ENGINE
   /////////////////////////////////////////////////////////////
-  /**
-   * Initialize the database engine
-   * @returns {Promise<void>}
-   */
-  async init() {
-    throw new Error("Unimplemented");
-  }
   /**
    * Shutdown the database engine
    * @returns {Promise<void>}
    */
   async shutdown() {
-    throw new Error("Unimplemented");
+    await REDIS.connector.quit();
+    await super.shutdown();
   }
   /////////////////////////////////////////////////////////////
   //    USERS
   /////////////////////////////////////////////////////////////
-  /**
-   * Add a verification code for email
-   * @param {string} email
-   * @param {string} code
-   * @returns {Promise<boolean>}
-   */
-  async addVerificationCode(email, code) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Verify and get the email address associated to it
-   * @param {string} code
-   * @returns {Promise<string|null>}
-   */
-  async verifyVerificationCode(code) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * @param {string} code
-   * @returns {Promise<void>}
-   */
-  async voidVerificationCode(code) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Request the password hash of the given user email
-   * @param {string|number} id email or username or loginid
-   * @returns {Promise<{loginid:number,hash:string}|null>}
-   */
-  async obtainUserPasswordHash(id) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Create an user in the database
-   * @param {User} user user to create, the final user id is returned in the object
-   * @param {string} password user password hash
-   * @returns {Promise<boolean>}
-   */
-  async addUser(user, password) {
-    throw new Error("Unimplemented");
-  }
   /**
    * Get the user information given the id
    * @param {number} loginid
    * @returns {Promise<User|null>}
    */
   async getUser(loginid) {
-    throw new Error("Unimplemented");
+    return await REDIS.getOrSet(
+      redisKeyUser(loginid),
+      () => super.getUser(loginid),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * A function for the database to apply the update without needing to compare the values
@@ -85,7 +45,10 @@ class IDatabase {
    * @param {{[key:any]:any}} changes
    */
   async updateUserSubtle(loginid, changes) {
-    throw new Error("Unimplemented");
+    await Promise.all([
+      super.updateUserSubtle(loginid, changes),
+      REDIS.invalidate(redisKeyUser(loginid)),
+    ]);
   }
   /**
    * Record an access token to the system (Establish a login session)
@@ -93,7 +56,10 @@ class IDatabase {
    * @param {number} loginid
    */
   async recordAccessToken(token, loginid) {
-    throw new Error("Unimplemented");
+    await Promise.race([
+      super.recordAccessToken(token, loginid),
+      REDIS.set(redisKeyAccessToken(token), loginid, token_validity),
+    ]);
   }
   /**
    * Check weather the token is valid and return its loginid
@@ -101,7 +67,19 @@ class IDatabase {
    * @returns {Promise<number|null>} the loginid or the token is invalid
    */
   async touchAccessToken(token) {
-    throw new Error("Unimplemented");
+    let exists = await REDIS.expire(redisKeyAccessToken(token), token_validity);
+    if (!exists) {
+      let loginid = await super.touchAccessToken(token);
+      //let it finishes without messing up with the main flow
+      REDIS.set(redisKeyAccessToken(token), loginid, token_validity);
+      return loginid;
+    } else {
+      //use promise race mode as it yields to the same thing
+      return await Promise.race([
+        REDIS.getOrSet(redisKeyAccessToken(token)),
+        super.touchAccessToken(token),
+      ]);
+    }
   }
   /**
    * Revoke the token
@@ -109,23 +87,11 @@ class IDatabase {
    * @returns {Promise<boolean>}
    */
   async revokeAccessToken(token) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Get secure word for user
-   * @param {string} id email or username
-   * @returns {Promise<string|null>}
-   */
-  async getUserSecureWord(id) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Query the system weather the phone number is registered
-   * @param {string} number
-   * @returns {Promise<boolean>}
-   */
-  async isPhoneNumberUsed(number) {
-    throw new Error("Unimplemented");
+    await Promise.all([
+      REDIS.invalidate(redisKeyAccessToken(token)),
+      super.revokeAccessToken(token),
+    ]);
+    return true;
   }
   /////////////////////////////////////////////////////////////
   //    PRODUCTS
@@ -135,7 +101,12 @@ class IDatabase {
    * @returns {Promise<{[key:number]:string}>}
    */
   async getCategories() {
-    throw new Error("Unimplemented");
+    return await REDIS.getOrSet(
+      "products$cats",
+      () => super.getCategories(),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Get the product id, optionally with the search
@@ -146,7 +117,15 @@ class IDatabase {
    * @returns {Promise<number[]>}
    */
   async getProducts(search, offset = 0, limit = 50, randomize = false) {
-    throw new Error("Unimplemented");
+    if (randomize) {
+      return await super.getProducts(search, offset, limit, randomize);
+    }
+    return await REDIS.getOrSet(
+      `products$q$${search}$${offset}$${limit}`,
+      () => super.getProducts(search, offset, limit, randomize),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Get the product id under a category, optionally with the search
@@ -164,7 +143,22 @@ class IDatabase {
     limit = 50,
     randomize = false
   ) {
-    throw new Error("Unimplemented");
+    if (randomize) {
+      return await super.getProductsByCategory(
+        category,
+        search,
+        offset,
+        limit,
+        randomize
+      );
+    }
+    return await REDIS.getOrSet(
+      `products$${category}$q$${search}$${offset}$${limit}`,
+      () =>
+        super.getProductsByCategory(category, search, offset, limit, randomize),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Get the product
@@ -173,7 +167,18 @@ class IDatabase {
    * @returns {Promise<Product|null>}
    */
   async getProduct(product_id, bypass_cache = false) {
-    throw new Error("Unimplemented");
+    if (bypass_cache) {
+      return await super.getProduct(product_id, true).then((z) => {
+        REDIS.set(redisKeyProductId(product_id), z, general_validity);
+        return z;
+      });
+    }
+    return await REDIS.getOrSet(
+      redisKeyProductId(product_id),
+      () => super.getProduct(product_id, true),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Get the products
@@ -182,7 +187,30 @@ class IDatabase {
    * @returns {Promise<(Product|null)[]>}
    */
   async getProductMulti(product_ids, bypass_cache = false) {
-    throw new Error("Unimplemented");
+    if (bypass_cache) {
+      return super.getProductMulti(product_ids, bypass_cache).then((z) => {
+        z.forEach((y, i) =>
+          REDIS.set(redisKeyProductId(product_ids[i]), y, general_validity)
+        );
+        return z;
+      });
+    }
+    const preattempt = await Promise.all(
+      product_ids.map((z) => REDIS.getOrSet(redisKeyProductId(z)))
+    );
+    //find out the missings
+    let unresolved = preattempt.filter((z) => !z).map((_, i) => product_ids[i]);
+    let resolve = await super.getProductMulti(unresolved, true).then((y) =>
+      y.map((z, i) => {
+        REDIS.set(redisKeyProductId(unresolved[i]), z, general_validity);
+        return z;
+      })
+    );
+    //merge them up
+    for (let i = 0; i < resolve.length; i++) {
+      preattempt[product_ids.indexOf(unresolved[i])] = resolve[i];
+    }
+    return preattempt;
   }
   /////////////////////////////////////////////////////////////
   //    ORDERS
@@ -193,24 +221,12 @@ class IDatabase {
    * @returns {Promise<Order[]>}
    */
   async getOrdersOfUser(loginid) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Get the specific order of the user, the order details are expanded in this call
-   * @param {number} loginid
-   * @param {number} orderid
-   * @returns {Promise<Order>}
-   */
-  async getUserOrder(loginid, orderid) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Attempt to expand the order details. Not meant to be used directly
-   * @param {Order} order
-   * @returns {Promise<boolean>}
-   */
-  async _expandOrderDetails(order) {
-    throw new Error("Unimplemented");
+    return await REDIS.getOrSet(
+      redisKeyUserOrder(loginid),
+      () => super.getOrdersOfUser(loginid),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Get current cart of user, details are expanded in this call
@@ -218,7 +234,12 @@ class IDatabase {
    * @returns {Promise<Order>}
    */
   async getUserCart(loginid) {
-    throw new Error("Unimplemented");
+    return await REDIS.getOrSet(
+      redisKeyUserCart(loginid),
+      () => super.getUserCart(loginid),
+      general_validity,
+      general_validity / 2
+    );
   }
   /**
    * Commit the cart
@@ -226,61 +247,36 @@ class IDatabase {
    * @returns {Promise<Transaction>}
    */
   async commitUserCart(loginid) {
-    throw new Error("Unimplemented");
+    let ret = await super.commitUserCart(loginid);
+    await Promise.all([
+      REDIS.invalidate(redisKeyUserCart(loginid)),
+      REDIS.invalidate(redisKeyUserOrder(loginid)),
+    ]);
+    return ret;
   }
   /**
    * Revert the effect of the commitUserCart on an order
+   * @param {number} loginid
    * @param {number} orderid
    * @returns {Promise<true>}
    */
-  async revertTransaction(orderid) {
-    throw new Error("Unimplemented");
+  async revertTransaction(loginid, orderid) {
+    await Promise.all([
+      super.revertTransaction(loginid, orderid),
+      REDIS.invalidate(redisKeyUserOrder(loginid)),
+    ]);
+    return true;
   }
   /**
    * A function for the database to apply the update without needing to compare the values
    * @param {number} orderid
    * @param {{[key:any]:any}} changes
    */
-  async updateOrderSubtle(orderid, changes) {
-    throw new Error("Unimplemented");
-  }
-  /////////////////////////////////////////////////////////////
-  //    TRANSACTION
-  /////////////////////////////////////////////////////////////
-  /**
-   * Get the specified transaction
-   * @param {number} loginid
-   * @param {number} txid
-   * @returns {Promise<Transaction|null>}
-   */
-  async getTransaction(loginid, txid) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Search the transaction ID for the given orderid
-   * @param {number} loginid
-   * @param {number} orderid
-   * @returns {Promise<Transaction|null>}
-   */
-  async searchTransactionForOrder(loginid, orderid) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * Search a transaction using the reference code issued by the payment method
-   * @param {string} method
-   * @param {string} reference
-   * @returns {Promise<Transaction|null>}
-   */
-  async searchTransactionForReference(method, reference) {
-    throw new Error("Unimplemented");
-  }
-  /**
-   * A function for the database to apply the update without needing to compare the values
-   * @param {number} txid
-   * @param {{[key:any]:any}} changes
-   */
-  async updateTransactionSubtle(txid, changes) {
-    throw new Error("Unimplemented");
+  async updateOrderSubtle(loginid, orderid, changes) {
+    await Promise.all([
+      super.updateOrderSubtle(loginid, orderid, changes),
+      REDIS.invalidate(redisKeyUserOrder(loginid)),
+    ]);
   }
   /**
    * Get the reviews of a product with productid
@@ -288,18 +284,22 @@ class IDatabase {
    * @returns {Promise<Review[]>}
    */
   async getProductReviews(productid) {
-    throw new Error("Unimplemented");
+    return await REDIS.getOrSet(
+      redisKeyReview(productid),
+      () => super.getProductReviews(productid),
+      general_validity / 2,
+      general_validity
+    );
   }
   /**
    * Add review
    * @param {Review} review
    */
   async addReview(review) {
-    throw new Error("Unimplemented");
+    await Promise.all([
+      super.addReview(review),
+      REDIS.expire(redisKeyReview(productid), 10),
+    ]);
   }
 }
-/**
- * Field that is removed
- */
-IDatabase.DELETED = Symbol("DELETED");
-module.exports = IDatabase;
+module.exports = RedisCachedDatabase;

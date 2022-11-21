@@ -99,6 +99,21 @@ class RedisStore {
     }
     return content ? JSON.parse(content) : null;
   }
+  /**
+   * Get the data but delete it when it succeeded
+   * @param {string} key
+   */
+  async getDel(key) {
+    //get the content from the database
+    // cannot use
+    // let content = await this.connector.getdel(key);
+    let tx = this.connector.multi();
+    tx.get(key);
+    tx.del(key);
+    //result of the first command [command index 0] [result index 1] (0 is error)
+    let content = (await tx.exec())[0][1];
+    return content ? JSON.parse(content) : null;
+  }
   async invalidate(key) {
     await this.connector.del(key);
   }

@@ -458,16 +458,16 @@ class PostgresDatabase extends IDatabase {
     }
   }
 
-  async updateOrderSubtle(orderid, changes) {
+  async updateOrderSubtle(loginid, orderid, changes) {
     //construct the statement on the fly
     let updates = "";
-    let params = [orderid];
+    let params = [orderid, loginid];
     const map = {
       shipping_address: "ship_address",
       country: "country",
     };
     let details_change = {};
-    let i = 2;
+    let i = 3;
     for (const key of Object.keys(changes)) {
       if ((key | 0) == key) {
         details_change[key] = changes[key];
@@ -483,7 +483,7 @@ class PostgresDatabase extends IDatabase {
       try {
         const query = `UPDATE premier.orders
         SET ${updates.slice(0, -1)}
-        WHERE orderid = $1`;
+        WHERE orderid = $1 AND loginid=$2`;
         if (updates.length > 0) {
           await client.query(query, params);
         }
@@ -608,10 +608,11 @@ class PostgresDatabase extends IDatabase {
   }
   /**
    * Revert the effect of the commitUserCart on an order
+   * @param {number} loginid
    * @param {number} orderid
    * @returns {Promise<true>}
    */
-  async revertTransaction(orderid) {
+  async revertTransaction(loginid, orderid) {
     //try to get the order id
     return await this.#doConnected(async function (client) {
       await client.query("BEGIN");

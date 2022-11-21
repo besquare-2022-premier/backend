@@ -230,18 +230,20 @@ class IDatabase {
   }
   /**
    * Revert the effect of the commitUserCart on an order
+   * @param {number} loginid
    * @param {number} orderid
    * @returns {Promise<true>}
    */
-  async revertTransaction(orderid) {
+  async revertTransaction(loginid, orderid) {
     throw new Error("Unimplemented");
   }
   /**
    * A function for the database to apply the update without needing to compare the values
+   * @param {number} loginid
    * @param {number} orderid
    * @param {{[key:any]:any}} changes
    */
-  async updateOrderSubtle(orderid, changes) {
+  async updateOrderSubtle(loginid, orderid, changes) {
     throw new Error("Unimplemented");
   }
   /////////////////////////////////////////////////////////////

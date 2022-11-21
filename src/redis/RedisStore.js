@@ -122,5 +122,6 @@ class RedisStore {
     await this.connector.quit();
   }
 }
-module.exports = new RedisStore();
+const use_redis = process.env.REDIS_HOST && process.env.REDIS_PASS;
+module.exports = use_redis ? new RedisStore() : {};
 module.exports.type = RedisStore;

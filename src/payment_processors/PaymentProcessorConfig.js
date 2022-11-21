@@ -4,7 +4,10 @@ const IPaymentProcessor = require("./IPaymentProcessor");
 /**
  * @type {IPaymentProcessor}
  */
-module.exports = new FakePaymentProcessor();
+module.exports =
+  process.env.NODE_ENV === "production"
+    ? new (require("./StripePaymentProessor"))() //the require must be inlined or it might breaks debug build
+    : new FakePaymentProcessor();
 
 if (!(module.exports instanceof IPaymentProcessor)) {
   throw new Error(

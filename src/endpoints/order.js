@@ -139,7 +139,7 @@ async function getCart(req, res) {
   sendJsonResponse(res, 200, items);
 }
 app.get("/cart", asyncExpressHandler(getCart));
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.patch(
   "/cart",
   asyncExpressHandler(async function (req, res) {

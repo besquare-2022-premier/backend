@@ -57,7 +57,7 @@ app.get(
   })
 );
 app.use(AuthenticatedEndpointMiddleware);
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.use(NonCachable);
 app.post(
   "/add-review",

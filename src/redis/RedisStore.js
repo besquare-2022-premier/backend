@@ -69,13 +69,14 @@ class RedisStore {
    */
   async getOrSet(key, generator = null, regenerateThreshold = 20, ttl = 300) {
     if (typeof generator === "function") {
+      let unlock = async () => {};
       try {
         //lock the key for this
-        const unlock = await this.obtainLock(key, 60, 100);
+        unlock = await this.obtainLock(key, 60, 100);
         try {
-          const ttl = await this.ttl(key);
+          const ttl_original = await this.ttl(key);
           //when ttl is about to be expired
-          if (ttl !== -1 && ttl <= regenerateThreshold) {
+          if (ttl_original !== -1 && ttl_original <= regenerateThreshold) {
             //rerun the generator
             let data = await generator();
             await this.set(key, data, ttl, true);
@@ -83,11 +84,12 @@ class RedisStore {
             return data;
           }
         } catch (e) {
-          await unlock();
           throw e;
         }
       } catch (e) {
         //ignore the error
+      } finally {
+        await unlock();
       }
     }
     //get the content from the database
@@ -116,6 +118,9 @@ class RedisStore {
   }
   async invalidate(key) {
     await this.connector.del(key);
+  }
+  async expire(key, ttl) {
+    return await this.connector.expire(key, ttl);
   }
   async quit() {
     await this.connector.quit();

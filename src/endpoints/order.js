@@ -335,7 +335,7 @@ app.post(
             tx_reference: "TERMINATED",
             tx_settle_time: new Date(),
           });
-          await DATABASE.revertTransaction(tx.orderid);
+          await DATABASE.revertTransaction(tx.loginid, tx.orderid);
         }
         throw e; //rethrow
       }

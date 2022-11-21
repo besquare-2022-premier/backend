@@ -316,7 +316,7 @@ class RedisCachedDatabase extends PostgresDatabase {
   async addReview(review) {
     await Promise.all([
       super.addReview(review),
-      REDIS.expire(redisKeyReview(productid), 10),
+      REDIS.expire(redisKeyReview(review.productid), 10),
     ]);
   }
 }

@@ -73,18 +73,14 @@ class RedisStore {
       try {
         //lock the key for this
         unlock = await this.obtainLock(key, 60, 100);
-        try {
-          const ttl_original = await this.ttl(key);
-          //when ttl is about to be expired
-          if (ttl_original !== -1 && ttl_original <= regenerateThreshold) {
-            //rerun the generator
-            let data = await generator();
-            await this.set(key, data, ttl, true);
-            //update the database
-            return data;
-          }
-        } catch (e) {
-          throw e;
+        const ttl_original = await this.ttl(key);
+        //when ttl is about to be expired
+        if (ttl_original !== -1 && ttl_original <= regenerateThreshold) {
+          //rerun the generator
+          let data = await generator();
+          await this.set(key, data, ttl, true);
+          //update the database
+          return data;
         }
       } catch (e) {
         //ignore the error

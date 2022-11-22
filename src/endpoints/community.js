@@ -32,7 +32,7 @@ app.get(
   })
 );
 //actively changed
-app.use(PubliclyCacheable.bind(null, 600));
+app.use(PubliclyCacheable.bind(null, 10));
 app.get(
   "/:topic",
   asyncExpressHandler(async function (req, res) {

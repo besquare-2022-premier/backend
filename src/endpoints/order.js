@@ -207,7 +207,7 @@ app.patch(
       } else {
         patch_list[changes.product_id] = changes.quantity;
       }
-      await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+      await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
       await getCart(req, res);
     }
   })
@@ -222,7 +222,7 @@ app.delete(
       patch_list[item.product_id] = IDatabase.DELETED;
     }
     if (cart.items.length > 0) {
-      await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+      await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
     }
     sendJsonResponse(res, 200, []);
   })
@@ -274,13 +274,13 @@ app.post(
     const order = await DATABASE.getUserCart(req.user);
     if (address && residence) {
       //copy over the provided addresses to the order
-      await DATABASE.updateOrderSubtle(order.orderid, {
+      await DATABASE.updateOrderSubtle(order.loginid, order.orderid, {
         shipping_address: address,
         country: residence,
       });
     } else if (user.shipping_address && user.residence) {
       //copy over the user addresses to the order
-      await DATABASE.updateOrderSubtle(order.orderid, {
+      await DATABASE.updateOrderSubtle(order.loginid, order.orderid, {
         shipping_address: user.shipping_address,
         country: user.residence,
       });

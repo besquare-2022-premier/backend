@@ -385,9 +385,11 @@ describe("Compliance test on current implementation", () => {
       await DATABASE.addCommunityMessage(message);
       expect(message.message_id).not.toBe(-1);
       let replies = await DATABASE.getCommunityRepliesForMessage(
-        message.message_id
+        community_message.message_id
       );
-      expect(replies.findIndex((z) => z.message_id === message.message_id));
+      expect(
+        replies.findIndex((z) => z.message_id === message.message_id)
+      ).not.toBe(-1);
     }
   );
 });

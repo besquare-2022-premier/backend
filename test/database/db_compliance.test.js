@@ -2,6 +2,7 @@ const { hash } = require("bcrypt");
 const { randomID, BCRYPT_ROUNDS } = require("../../src/authentication/utils");
 const DATABASE = require("../../src/database/DBConfig");
 const IDatabase = require("../../src/database/IDatabase");
+const Review = require("../../src/models/review");
 const Transaction = require("../../src/models/transaction");
 const User = require("../../src/models/user");
 const _ready = process.env.HAVE_DB && DATABASE.constructor != IDatabase;
@@ -279,6 +280,25 @@ describe("Compliance test on current implementation", () => {
       expect(
         (await DATABASE.getTransaction(user.loginid, tx.tx_id))?.tx_status
       ).toBe(Transaction.Status.CANCELLED);
+    }
+  );
+  _itif(user.loginid != -1, "Product review should works", async function () {
+    let review = new Review(
+      products[0],
+      user.loginid,
+      user.username,
+      "5",
+      "Nice",
+      new Date()
+    );
+    await DATABASE.addReview(review);
+  });
+  _itif(
+    user.loginid != -1,
+    "addReview should brings effect",
+    async function () {
+      let reviews = await DATABASE.getProductReviews(products[0]);
+      expect(reviews.findIndex((z) => z.loginid === user.loginid)).not.toBe(-1);
     }
   );
 });

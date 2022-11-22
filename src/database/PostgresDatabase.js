@@ -827,6 +827,7 @@ class PostgresDatabase extends IDatabase {
         USING (loginid)
         LEFT JOIN premier.community_topic
         USING (topicid)
+        ORDER BY message_time DESC
         `,
         [topic, offset, limit]
       );
@@ -856,6 +857,7 @@ class PostgresDatabase extends IDatabase {
         USING (loginid)
         LEFT JOIN premier.community_topic
         USING (topicid)
+        ORDER BY message_time DESC
         `,
         [message_id, offset, limit]
       );

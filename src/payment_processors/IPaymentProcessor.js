@@ -25,5 +25,11 @@ class IPaymentProcessor {
   async querySessionStatus(session_id) {
     throw new Error("Unimplemented");
   }
+  /**
+   * An optional function to be implemented when the transaction
+   * is going to be marked as void
+   * @param {string} session_id
+   */
+  async destroySession(session_id) {}
 }
 module.exports = IPaymentProcessor;

@@ -385,8 +385,10 @@ class PostgresDatabase extends IDatabase {
     const self = this;
     return await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT * from premier.orders
-        WHERE loginid = $1 ORDER BY orderid DESC`,
+        `SELECT * from premier.orders AS o
+        WHERE loginid = $1 AND EXISTS
+        (SELECT t.orderid FROM premier.transaction AS t
+        WHERE o.orderid = t.orderid) ORDER BY orderid DESC`,
         [loginid]
       );
       return result.rows.map((z) => self.#constructOrderFromRow(z)) ?? null;
@@ -458,16 +460,16 @@ class PostgresDatabase extends IDatabase {
     }
   }
 
-  async updateOrderSubtle(orderid, changes) {
+  async updateOrderSubtle(loginid, orderid, changes) {
     //construct the statement on the fly
     let updates = "";
-    let params = [orderid];
+    let params = [orderid, loginid];
     const map = {
       shipping_address: "ship_address",
       country: "country",
     };
     let details_change = {};
-    let i = 2;
+    let i = 3;
     for (const key of Object.keys(changes)) {
       if ((key | 0) == key) {
         details_change[key] = changes[key];
@@ -483,7 +485,7 @@ class PostgresDatabase extends IDatabase {
       try {
         const query = `UPDATE premier.orders
         SET ${updates.slice(0, -1)}
-        WHERE orderid = $1`;
+        WHERE orderid = $1 AND loginid=$2`;
         if (updates.length > 0) {
           await client.query(query, params);
         }
@@ -608,10 +610,11 @@ class PostgresDatabase extends IDatabase {
   }
   /**
    * Revert the effect of the commitUserCart on an order
+   * @param {number} loginid
    * @param {number} orderid
    * @returns {Promise<true>}
    */
-  async revertTransaction(orderid) {
+  async revertTransaction(loginid, orderid) {
     //try to get the order id
     return await this.#doConnected(async function (client) {
       await client.query("BEGIN");
@@ -743,6 +746,7 @@ class PostgresDatabase extends IDatabase {
     return new Review(
       row.productid,
       row.loginid,
+      row.username,
       row.product_rating,
       row.product_review,
       row.review_time
@@ -751,7 +755,8 @@ class PostgresDatabase extends IDatabase {
   async getProductReviews(productid) {
     let query_result = await this.#doConnected(async function (client) {
       let result = await client.query(
-        `SELECT * FROM premier.product_review
+        `SELECT pr.*,u.username FROM premier.product_review as pr INNER JOIN 
+        premier.user_details as u using (loginid)
         WHERE productid = $1`,
         [productid]
       );

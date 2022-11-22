@@ -10,7 +10,7 @@ const ResponseBase = require("../types/response_base");
  * @param {express.Response} res
  * @param {express.NextFunction} next
  */
-function CSRFProtectedMiddleware(req, res, next) {
+async function CSRFProtectedMiddleware(req, res, next) {
   let token;
   if (!(token = req.get("X-CSRF-Token"))) {
     sendJsonResponse(
@@ -23,9 +23,9 @@ function CSRFProtectedMiddleware(req, res, next) {
   //detect the request type
   let validation = false;
   if (req.user) {
-    validation = verifyToken(token, req.access_token, "access");
+    validation = await verifyToken(token, req.access_token, "access");
   } else {
-    validation = verifyToken(token, req.session_id, "session");
+    validation = await verifyToken(token, req.session_id, "session");
   }
   if (!validation) {
     sendJsonResponse(

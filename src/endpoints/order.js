@@ -131,7 +131,7 @@ async function getCart(req, res) {
   (await DATABASE.getProductMulti(cart.items.map((y) => y.product_id))).forEach(
     (product, index) => {
       let handle = items[index];
-      handle.price = product.proce;
+      handle.unit_price = product.price;
       handle.product_name = product.name;
       handle.available = product.stock !== 0;
     }
@@ -139,7 +139,7 @@ async function getCart(req, res) {
   sendJsonResponse(res, 200, items);
 }
 app.get("/cart", asyncExpressHandler(getCart));
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.patch(
   "/cart",
   asyncExpressHandler(async function (req, res) {
@@ -207,7 +207,7 @@ app.patch(
       } else {
         patch_list[changes.product_id] = changes.quantity;
       }
-      await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+      await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
       await getCart(req, res);
     }
   })
@@ -222,7 +222,7 @@ app.delete(
       patch_list[item.product_id] = IDatabase.DELETED;
     }
     if (cart.items.length > 0) {
-      await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+      await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
     }
     sendJsonResponse(res, 200, []);
   })
@@ -258,7 +258,7 @@ app.post(
     for (const item of order.items) {
       patch_list[item.product_id] = item.quantity;
     }
-    await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+    await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
     await getCart(req, res);
   })
 );
@@ -274,13 +274,13 @@ app.post(
     const order = await DATABASE.getUserCart(req.user);
     if (address && residence) {
       //copy over the provided addresses to the order
-      await DATABASE.updateOrderSubtle(order.orderid, {
+      await DATABASE.updateOrderSubtle(order.loginid, order.orderid, {
         shipping_address: address,
         country: residence,
       });
     } else if (user.shipping_address && user.residence) {
       //copy over the user addresses to the order
-      await DATABASE.updateOrderSubtle(order.orderid, {
+      await DATABASE.updateOrderSubtle(order.loginid, order.orderid, {
         shipping_address: user.shipping_address,
         country: user.residence,
       });
@@ -315,6 +315,7 @@ app.post(
       //save the session_id for future reference
       await DATABASE.updateTransactionSubtle(tx.tx_id, {
         tx_reference: session_id,
+        payment_method: PROCESSOR.name ?? "INTERNAL",
       });
       //we are done, give them the url back
       const response = new ResponseBase(NO_ERROR, "OK");
@@ -335,7 +336,7 @@ app.post(
             tx_reference: "TERMINATED",
             tx_settle_time: new Date(),
           });
-          await DATABASE.revertTransaction(tx.orderid);
+          await DATABASE.revertTransaction(tx.loginid, tx.orderid);
         }
         throw e; //rethrow
       }

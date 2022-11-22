@@ -196,7 +196,7 @@ app.post("/:topic", async function (req, res) {
     );
     return;
   }
-  if (await DATABASE.isCommunityTopicExists(topic)) {
+  if (!(await DATABASE.isCommunityTopicExists(topic))) {
     sendJsonResponse(
       res,
       404,
@@ -248,7 +248,7 @@ app.post("/:topic/:message_id", async function (req, res) {
     );
     return;
   }
-  if (await DATABASE.isCommunityTopicExists(topic)) {
+  if (!(await DATABASE.isCommunityTopicExists(topic))) {
     sendJsonResponse(
       res,
       404,

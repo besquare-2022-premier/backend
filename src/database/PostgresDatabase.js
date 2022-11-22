@@ -818,6 +818,7 @@ class PostgresDatabase extends IDatabase {
             WHERE topic=$1
           )
           AND replying IS NULL
+          ORDER BY message_time DESC
           OFFSET $2
           LIMIT $3
         )
@@ -846,6 +847,7 @@ class PostgresDatabase extends IDatabase {
         `WITH base as (
           SELECT * FROM premier.community_message 
           WHERE replying = $1
+          ORDER BY message_time DESC
           OFFSET $2
           LIMIT $3
         )

@@ -7,6 +7,7 @@ const Order = require("../models/order");
 const Transaction = require("../models/transaction");
 const OutOfStockError = require("../types/OutOfStockError");
 const Review = require("../models/review");
+const CommunityMessage = require("../models/community_message");
 
 class PostgresDatabase extends IDatabase {
   constructor() {
@@ -62,7 +63,7 @@ class PostgresDatabase extends IDatabase {
         `INSERT INTO premier.verification
         (verification_email,verification_code) 
         VALUES ($1,$2) ON CONFLICT (verification_email) DO UPDATE 
-        SET verification_code=excluded.verification_code`,
+        SET verification_code=excluded.verification_code, expired=DEFAULT`,
         [email, code]
       );
     });
@@ -776,6 +777,165 @@ class PostgresDatabase extends IDatabase {
       );
     });
     return result !== null;
+  }
+  /**
+   * Get all the community topics which supported by the system
+   * @returns {Promise<string[]>}
+   */
+  async getCommunityTopics() {
+    return await this.#doConnected(async function (client) {
+      const { rows } = await client.query(
+        "SELECT topic FROM premier.community_topic"
+      );
+      return rows?.map((z) => z.topic);
+    });
+  }
+  #constructCommunityMessageFromRow(z) {
+    return new CommunityMessage(
+      z.messageid,
+      z.topic,
+      z.loginid,
+      z.username,
+      z.message_content,
+      z.message_time,
+      z.replying
+    );
+  }
+  /**
+   * Get the community messages which belonging to the topic
+   * @param {string} topic The topic which the messages should be obtained
+   * @param {number} offset
+   * @param {number} limit
+   * @returns {Promise<CommunityMessage[]>}
+   */
+  async getCommunityMessageForTopic(topic, offset = 0, limit = 50) {
+    let results = await this.#doConnected(async function (client) {
+      const { rows } = await client.query(
+        `WITH base as (
+          SELECT * FROM premier.community_message 
+          WHERE topicid=(
+            SELECT topicid FROM premier.community_topic
+            WHERE topic=$1
+          )
+          AND replying IS NULL
+          ORDER BY message_time DESC
+          OFFSET $2
+          LIMIT $3
+        )
+        SELECT base.*,username,topic FROM base 
+        LEFT JOIN premier.user_details
+        USING (loginid)
+        LEFT JOIN premier.community_topic
+        USING (topicid)
+        ORDER BY message_time DESC
+        `,
+        [topic, offset, limit]
+      );
+      return rows;
+    });
+    return results?.map((z) => this.#constructCommunityMessageFromRow(z));
+  }
+  /**
+   * Get the replies for the message
+   * @param {number} message_id The id of the message that its replies should be obtained
+   * @param {number} offset
+   * @param {number} limit
+   * @returns {Promise<CommunityMessage[]>}
+   */
+  async getCommunityRepliesForMessage(message_id, offset = 0, limit = 50) {
+    let results = await this.#doConnected(async function (client) {
+      const { rows } = await client.query(
+        `WITH base as (
+          SELECT * FROM premier.community_message 
+          WHERE replying = $1
+          ORDER BY message_time DESC
+          OFFSET $2
+          LIMIT $3
+        )
+        SELECT base.*,username,topic FROM base 
+        LEFT JOIN premier.user_details
+        USING (loginid)
+        LEFT JOIN premier.community_topic
+        USING (topicid)
+        ORDER BY message_time DESC
+        `,
+        [message_id, offset, limit]
+      );
+      return rows;
+    });
+    return results?.map((z) => this.#constructCommunityMessageFromRow(z));
+  }
+  /**
+   * Add a message into the database
+   * @param {CommunityMessage} message The message to be added
+   * @returns {Promise<true>}
+   */
+  async addCommunityMessage(message) {
+    return (
+      (await this.#doConnected(async function (client) {
+        //perform the check on the topic
+        const { rows: result_rows } = await client.query(
+          `SELECT topicid FROM premier.community_topic WHERE topic = $1`,
+          [message.topic]
+        );
+        if (result_rows.length === 0) {
+          throw new Error(`Topic name ${message.topic} not exists`);
+        }
+        let result = await client.query(
+          `INSERT INTO premier.community_message(topicid,loginid,message_content,replying)
+          VALUES ($1,$2,$3,$4) RETURNING messageid`,
+          [
+            result_rows[0].topicid,
+            message.loginid,
+            message.message,
+            message.replying_to,
+          ]
+        );
+        message.message_id = result.rows[0].messageid;
+      })) ?? false
+    );
+  }
+  /**
+   * Get the community message
+   * @param {number} message_id
+   * @returns {Promise<CommunityMessage|null>}
+   */
+  async getCommunityMessage(message_id) {
+    let results = await this.#doConnected(async function (client) {
+      const { rows } = await client.query(
+        `WITH base as (
+          SELECT * FROM premier.community_message 
+          WHERE messageid=$1
+        )
+        SELECT base.*,username,topic FROM base 
+        LEFT JOIN premier.user_details
+        USING (loginid)
+        LEFT JOIN premier.community_topic
+        USING (topicid)
+        `,
+        [message_id]
+      );
+      return rows;
+    });
+    if (results?.length === 0) {
+      return null;
+    } else {
+      return this.#constructCommunityMessageFromRow(results[0]);
+    }
+  }
+  /**
+   * Check weather the topic is exists
+   * @param {string} topic
+   * @returns {Promise<boolean>}
+   */
+  async isCommunityTopicExists(topic) {
+    return await this.#doConnected(async function (client) {
+      const { rows: result_rows } = await client.query(
+        `SELECT topicid FROM premier.community_topic WHERE topic = $1`,
+        [topic]
+      );
+      return result_rows.length > 0;
+    });
   }
 }
 

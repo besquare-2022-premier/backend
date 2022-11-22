@@ -258,7 +258,7 @@ app.post(
     for (const item of order.items) {
       patch_list[item.product_id] = item.quantity;
     }
-    await DATABASE.updateOrderSubtle(cart.orderid, patch_list);
+    await DATABASE.updateOrderSubtle(cart.loginid, cart.orderid, patch_list);
     await getCart(req, res);
   })
 );

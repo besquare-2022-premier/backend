@@ -63,7 +63,7 @@ class PostgresDatabase extends IDatabase {
         `INSERT INTO premier.verification
         (verification_email,verification_code) 
         VALUES ($1,$2) ON CONFLICT (verification_email) DO UPDATE 
-        SET verification_code=excluded.verification_code`,
+        SET verification_code=excluded.verification_code, expired=DEFAULT`,
         [email, code]
       );
     });

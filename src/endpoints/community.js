@@ -21,7 +21,6 @@ const {
   sendJsonResponse,
   assertJsonRequest,
 } = require("./common_utils");
-const nuke_html_regex = /<(\/)?(([^>])+(?<!").?)>/g;
 const app = express.Router();
 //almost never changed
 app.use(PubliclyCacheable.bind(null, 6000));
@@ -205,8 +204,6 @@ app.post("/:topic", async function (req, res) {
     );
     return;
   }
-  //strip all html tags whenever possible
-  message = message.replace(nuke_html_regex, "");
   //construct the object
   const obj = new CommunityMessage(
     -1,
@@ -269,8 +266,6 @@ app.post("/:topic/:message_id", async function (req, res) {
     );
     return;
   }
-  //strip all html tags whenever possible
-  message = message.replace(nuke_html_regex, "");
   //construct the object
   const obj = new CommunityMessage(
     -1,

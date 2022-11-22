@@ -10,5 +10,6 @@ app.use("/product", require("./product"));
 app.use("/whoami", require("./profile"));
 app.use("/orders", require("./order"));
 app.use("/product-review", require("./review"));
+app.use("/community", require("./community"));
 
 module.exports = app;

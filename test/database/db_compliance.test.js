@@ -2,6 +2,8 @@ const { hash } = require("bcrypt");
 const { randomID, BCRYPT_ROUNDS } = require("../../src/authentication/utils");
 const DATABASE = require("../../src/database/DBConfig");
 const IDatabase = require("../../src/database/IDatabase");
+const CommunityMessage = require("../../src/models/community_message");
+const Review = require("../../src/models/review");
 const Transaction = require("../../src/models/transaction");
 const User = require("../../src/models/user");
 const _ready = process.env.HAVE_DB && DATABASE.constructor != IDatabase;
@@ -201,7 +203,7 @@ describe("Compliance test on current implementation", () => {
       //issue the change
       let change = {};
       change[id] = 10;
-      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
       //perform the check
       cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.find((z) => z.product_id === id)?.quantity).toBe(10);
@@ -215,7 +217,7 @@ describe("Compliance test on current implementation", () => {
       let change = {};
       change[id] = IDatabase.DELETED;
       //issue the change
-      await DATABASE.updateOrderSubtle(cart.orderid, change);
+      await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
       //perform the check
       cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
       expect(cart.items.findIndex((z) => z.product_id === id)).toBe(-1);
@@ -229,7 +231,7 @@ describe("Compliance test on current implementation", () => {
     //issue the change
     let change = {};
     change[id] = 10;
-    await DATABASE.updateOrderSubtle(cart.orderid, change);
+    await DATABASE.updateOrderSubtle(user.loginid, cart.orderid, change);
     tx = await DATABASE.commitUserCart(user.loginid);
     //we need it for reference
     cart = await DATABASE.getUserOrder(user.loginid, cart.orderid);
@@ -263,7 +265,9 @@ describe("Compliance test on current implementation", () => {
     user.loginid != -1 && tx.tx_id != -1,
     "revertTransaction should always succeeded",
     async function () {
-      expect(await DATABASE.revertTransaction(tx.orderid)).toBe(true);
+      expect(await DATABASE.revertTransaction(user.loginid, tx.orderid)).toBe(
+        true
+      );
     }
   );
   _itif(
@@ -277,6 +281,113 @@ describe("Compliance test on current implementation", () => {
       expect(
         (await DATABASE.getTransaction(user.loginid, tx.tx_id))?.tx_status
       ).toBe(Transaction.Status.CANCELLED);
+    }
+  );
+  _itif(user.loginid != -1, "Product review should works", async function () {
+    let review = new Review(
+      products[0],
+      user.loginid,
+      user.username,
+      "5",
+      "Nice",
+      new Date()
+    );
+    await DATABASE.addReview(review);
+  });
+  _itif(
+    user.loginid != -1,
+    "addReview should brings effect",
+    async function () {
+      let reviews = await DATABASE.getProductReviews(products[0]);
+      expect(reviews.findIndex((z) => z.loginid === user.loginid)).not.toBe(-1);
+    }
+  );
+  let community_topics;
+  _it("Community topics should be always enumerable", async function () {
+    community_topics = await DATABASE.getCommunityTopics();
+    expect(Array.isArray(community_topics)).toBe(true);
+  });
+  _it(
+    "The existance query for the community topic shall works for the valids",
+    async function () {
+      for (const topic of community_topics) {
+        expect(await DATABASE.isCommunityTopicExists(topic)).toBe(true);
+      }
+      expect(await DATABASE.isCommunityTopicExists("Never")).toBe(false);
+    }
+  );
+  let community_message;
+  _itif(
+    user.loginid != -1,
+    "The message should always be addable",
+    async function () {
+      community_message = new CommunityMessage(
+        -1,
+        community_topics[0],
+        user.loginid,
+        user.username,
+        "Hello",
+        new Date(),
+        null
+      );
+      await DATABASE.addCommunityMessage(community_message);
+      expect(community_message.message_id).not.toBe(-1);
+    }
+  );
+  _itif(
+    user.loginid != -1,
+    "The addCommunityMessage should have effect toward the database",
+    async function () {
+      let ret = await DATABASE.getCommunityMessageForTopic(
+        community_topics[0],
+        0,
+        100
+      );
+      expect(ret.findIndex((z) => z.loginid === user.loginid)).not.toBe(-1);
+    }
+  );
+  _itif(
+    user.loginid != -1,
+    "The getCommunityMessageForTopic and getMessage should returns te similar object",
+    async function () {
+      let ret = await DATABASE.getCommunityMessageForTopic(
+        community_topics[0],
+        0,
+        100
+      );
+      let obj = ret.find((z) => z.message_id === community_message.message_id);
+      expect(obj).toBeTruthy();
+      const message = await DATABASE.getCommunityMessage(
+        community_message.message_id
+      );
+      expect(message).toBeTruthy();
+      for (const key of Object.keys(message)) {
+        if (["secure_word", "first_join"].includes(key)) {
+          continue;
+        }
+        expect(obj[key]).toStrictEqual(message[key]);
+      }
+    }
+  );
+  _itif(
+    user.loginid != -1,
+    "The addCommunityMessage (reply) shall works",
+    async function () {
+      let message = new CommunityMessage(
+        -1,
+        community_topics[0],
+        user.loginid,
+        user.username,
+        "Hello",
+        new Date(),
+        community_message.message_id
+      );
+      await DATABASE.addCommunityMessage(message);
+      expect(message.message_id).not.toBe(-1);
+      let replies = await DATABASE.getCommunityRepliesForMessage(
+        message.message_id
+      );
+      expect(replies.findIndex((z) => z.message_id === message.message_id));
     }
   );
 });

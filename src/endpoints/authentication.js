@@ -61,7 +61,7 @@ app.use(function (req, res, next) {
     next();
   }
 });
-app.use(CSRFProtectedMiddleware);
+app.use(asyncExpressHandler(CSRFProtectedMiddleware));
 app.post(
   "/register",
   asyncExpressHandler(async function (req, res) {

@@ -134,6 +134,7 @@ async function getCart(req, res) {
       handle.unit_price = product.price;
       handle.product_name = product.name;
       handle.available = product.stock !== 0;
+      handle.image = product.image;
     }
   );
   sendJsonResponse(res, 200, items);

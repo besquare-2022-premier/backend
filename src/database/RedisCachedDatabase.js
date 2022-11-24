@@ -36,7 +36,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       redisKeyUser(loginid),
       () => super.getUser(loginid),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -105,7 +105,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       "products$cats",
       () => super.getCategories(),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -124,7 +124,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       `products$q$${search}$${offset}$${limit}`,
       () => super.getProducts(search, offset, limit, randomize),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -157,7 +157,7 @@ class RedisCachedDatabase extends PostgresDatabase {
       `products$${category}$q$${search}$${offset}$${limit}`,
       () =>
         super.getProductsByCategory(category, search, offset, limit, randomize),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -177,7 +177,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       redisKeyProductId(product_id),
       () => super.getProduct(product_id, true),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -227,7 +227,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       redisKeyUserOrder(loginid),
       () => super.getOrdersOfUser(loginid),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -241,7 +241,7 @@ class RedisCachedDatabase extends PostgresDatabase {
       redisKeyUserCart(loginid),
       () => super.getUserCart(loginid),
       general_validity,
-      general_validity / 2
+      general_validity / 4
     );
   }
   /**
@@ -254,7 +254,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       redisKeyUserOrderDetailed(loginid, orderid),
       () => super.getUserOrder(loginid, orderid),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }
@@ -305,7 +305,7 @@ class RedisCachedDatabase extends PostgresDatabase {
     return await REDIS.getOrSet(
       redisKeyReview(productid),
       () => super.getProductReviews(productid),
-      general_validity / 2,
+      general_validity / 4,
       general_validity
     );
   }

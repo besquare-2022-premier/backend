@@ -265,10 +265,10 @@ class RedisCachedDatabase extends PostgresDatabase {
    */
   async commitUserCart(loginid) {
     let ret = await super.commitUserCart(loginid);
-    await Promise.all([
-      REDIS.invalidate(redisKeyUserCart(loginid)),
-      REDIS.invalidate(redisKeyUserOrder(loginid)),
-    ]);
+    await REDIS.unlinkKeys(
+      redisKeyUserCart(loginid),
+      redisKeyUserOrder(loginid)
+    );
     return ret;
   }
   /**
@@ -292,8 +292,10 @@ class RedisCachedDatabase extends PostgresDatabase {
   async updateOrderSubtle(loginid, orderid, changes) {
     await Promise.all([
       super.updateOrderSubtle(loginid, orderid, changes),
-      REDIS.invalidate(redisKeyUserOrder(loginid)),
-      REDIS.invalidate(redisKeyUserOrderDetailed(loginid, orderid)),
+      REDIS.unlinkKeys(
+        redisKeyUserOrder(loginid),
+        redisKeyUserOrderDetailed(loginid, orderid)
+      ),
     ]);
   }
   /**

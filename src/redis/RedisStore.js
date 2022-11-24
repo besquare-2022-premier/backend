@@ -115,6 +115,9 @@ class RedisStore {
   async invalidate(key) {
     await this.connector.del(key);
   }
+  async unlinkKeys(...key) {
+    await this.connector.unlink(...key);
+  }
   async expire(key, ttl) {
     return await this.connector.expire(key, ttl);
   }

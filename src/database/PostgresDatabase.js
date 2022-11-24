@@ -418,7 +418,8 @@ class PostgresDatabase extends IDatabase {
     let query_result = await this.#doConnected(async function (client) {
       let result = await client.query(
         `SELECT productid as product_id, quantity, price
-        FROM premier.order_details where orderid=$1`,
+        FROM premier.order_details where orderid=$1
+        ORDER BY productid ASC`,
         [order.orderid]
       );
       return result.rows;

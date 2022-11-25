@@ -78,7 +78,7 @@ app.get(
       tx_status: resolution === "void" ? Transaction.Status.CANCELLED : status,
       tx_settle_time: new Date(),
     });
-    res.status(204).end();
+    res.redirect(`https://merch-paradise.xyz/profile/orders/${tx.orderid}`);
   })
 );
 module.exports = app;

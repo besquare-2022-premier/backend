@@ -59,7 +59,8 @@ app.get(
       throw new Error("No reference id");
     }
     if (tx.tx_status !== Transaction.Status.CREATED) {
-      res.status(204).end(); //dont process it anymore
+      res.redirect(`https://merch-paradise.xyz/profile/orders/${tx.orderid}`);
+      return;
     }
     //when the resolution provided is void
     //void the transaction

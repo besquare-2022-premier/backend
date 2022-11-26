@@ -217,7 +217,7 @@ class PostgresDatabase extends IDatabase {
   async touchAccessToken(token) {
     let loginid = await this.#doConnected(async function (client) {
       let result = await client.query(
-        "UPDATE premier.authentication_access_tokens SET expiry=DEFAULT WHERE access_token=$1 RETURNING loginid",
+        "UPDATE premier.valid_access_tokens SET expiry=DEFAULT WHERE access_token=$1 RETURNING loginid",
         [token]
       );
       return result.rows[0]?.loginid ?? null;

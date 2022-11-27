@@ -59,7 +59,9 @@ app.get(
       throw new Error("No reference id");
     }
     if (tx.tx_status !== Transaction.Status.CREATED) {
-      res.redirect(`https://merch-paradise.xyz/profile/orders/${tx.orderid}`);
+      res.redirect(
+        `https://www.merch-paradise.xyz/profile/orders/${tx.orderid}`
+      );
       return;
     }
     //when the resolution provided is void
@@ -79,7 +81,7 @@ app.get(
       tx_status: resolution === "void" ? Transaction.Status.CANCELLED : status,
       tx_settle_time: new Date(),
     });
-    res.redirect(`https://merch-paradise.xyz/profile/orders/${tx.orderid}`);
+    res.redirect(`https://www.merch-paradise.xyz/profile/orders/${tx.orderid}`);
   })
 );
 module.exports = app;

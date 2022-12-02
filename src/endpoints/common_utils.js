@@ -47,7 +47,7 @@ function assertJsonRequest(req, res) {
  * @returns {boolean}
  */
 function validEmail(email) {
-  return /^[\w-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
+  return /^[\w+-.]+@([\w-]+\.)+[\w-]{2,}$/.test(email);
 }
 function validPassword(password) {
   return /(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@#$!%^&*()=+-/.]).{8,}/.test(

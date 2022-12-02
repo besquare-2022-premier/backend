@@ -351,7 +351,8 @@ app.post(
             email,
             "Reset Merch Paradise Password",
             `Hi @${data.username},<br/>
-            Here is your new password:${password} .<br/> Please change it immediately after your have logged in.
+            Here is your new password: ${password} .
+            Please change it immediately after your have logged in. <br/>
             Regards, <br/>
             Merch Paradise Support Team`
           ),

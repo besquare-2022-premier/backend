@@ -323,8 +323,8 @@ app.post(
     if (!assertJsonRequest(req, res)) {
       return;
     }
-    const { username } = req.body;
-    if (!isString(username)) {
+    const { email } = req.body;
+    if (!isString(email)) {
       sendJsonResponse(
         res,
         400,
@@ -332,7 +332,7 @@ app.post(
       );
       return;
     }
-    const user_data = await DATABASE.obtainUserPasswordHash(username);
+    const user_data = await DATABASE.obtainUserPasswordHash(email);
     /**
      * It is very important for us to provide the same reaction not matter the input to
      * prevent timing attack. So, always generate the password
@@ -348,7 +348,7 @@ app.post(
             password: hash,
           }),
           SMTPProvider.sendEmail(
-            data.email,
+            email,
             "Reset Merch Paradise Password",
             `Hi @${data.username},<br/>
             Here is your new password:${password} .<br/> Please change it immediately after your have logged in.

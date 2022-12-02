@@ -338,14 +338,14 @@ app.post(
      * prevent timing attack. So, always generate the password
      */
     const password = `${await randomID()}${await randomID()}`;
-    const hash = await hash(password, BCRYPT_ROUNDS);
+    const password_hash = await hash(password, BCRYPT_ROUNDS);
     if (user_data) {
       //execute it asynchronously so timing attack is hard
       (async function () {
         const data = await DATABASE.getUser(user_data.loginid);
         await Promise.all([
           DATABASE.updateUserSubtle(user_data.loginid, {
-            password: hash,
+            password: password_hash,
           }),
           SMTPProvider.sendEmail(
             email,

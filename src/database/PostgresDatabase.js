@@ -192,6 +192,9 @@ class PostgresDatabase extends IDatabase {
     };
     let i = 2;
     for (const key of Object.keys(changes)) {
+      if (!map[key]) {
+        continue;
+      }
       updates += ` ${map[key]}=$${i++} ,`;
       const value = changes[key];
       params.push(value === IDatabase.DELETED ? null : value);
@@ -476,6 +479,8 @@ class PostgresDatabase extends IDatabase {
       if ((key | 0) == key) {
         details_change[key] = changes[key];
         continue;
+      } else if (!map[key]) {
+        continue;
       }
       updates += ` ${map[key]}=$${i++} ,`;
       const value = changes[key];
@@ -729,6 +734,9 @@ class PostgresDatabase extends IDatabase {
     };
     let i = 2;
     for (const key of Object.keys(changes)) {
+      if (!map[key]) {
+        continue;
+      }
       updates += ` ${map[key]}=$${i++} ,`;
       const value =
         key === "tx_status"

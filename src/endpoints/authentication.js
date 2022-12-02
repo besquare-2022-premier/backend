@@ -318,6 +318,57 @@ app.post(
   })
 );
 app.post(
+  "/reset-password",
+  asyncExpressHandler(async function (req, res) {
+    if (!assertJsonRequest(req, res)) {
+      return;
+    }
+    const { username } = req.body;
+    if (!isString(username)) {
+      sendJsonResponse(
+        res,
+        400,
+        new ResponseBase(REQUIRED_FIELD_MISSING, "Email are required")
+      );
+      return;
+    }
+    const user_data = await DATABASE.obtainUserPasswordHash(username);
+    /**
+     * It is very important for us to provide the same reaction not matter the input to
+     * prevent timing attack. So, always generate the password
+     */
+    const password = `${await randomID()}${await randomID()}`;
+    const hash = await hash(password, BCRYPT_ROUNDS);
+    if (user_data) {
+      //execute it asynchronously so timing attack is hard
+      (async function () {
+        const data = await DATABASE.getUser(user_data.loginid);
+        await Promise.all([
+          DATABASE.updateUserSubtle(user_data.loginid, {
+            password: hash,
+          }),
+          SMTPProvider.sendEmail(
+            data.email,
+            "Reset Merch Paradise Password",
+            `Hi @${data.username},<br/>
+            Here is your new password:${password} .<br/> Please change it immediately after your have logged in.
+            Regards, <br/>
+            Merch Paradise Support Team`
+          ),
+        ]);
+      })();
+    }
+    sendJsonResponse(
+      res,
+      200,
+      new ResponseBase(
+        REQUIRED_FIELD_MISSING,
+        "Success! Please check your mailbox for the new password"
+      )
+    );
+  })
+);
+app.post(
   "/secure-word",
   asyncExpressHandler(async function (req, res) {
     if (!assertJsonRequest(req, res)) {
@@ -332,9 +383,11 @@ app.post(
       );
       return;
     }
-    let secure_word =
-      (await DATABASE.getUserSecureWord(username)) ||
-      (await randomSecureWord());
+    // let secure_word =
+    //   (await DATABASE.getUserSecureWord(username)) ||
+    //   (await randomSecureWord());
+    // disable it as it is currently not used by frontend
+    let secure_word = await randomSecureWord();
     sendJsonResponse(res, 200, new SecureWordResponse(secure_word));
   })
 );

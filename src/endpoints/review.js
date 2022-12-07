@@ -21,7 +21,7 @@ const {
 const Review = require("../models/review");
 
 const app = express.Router();
-app.use(PubliclyCacheable.bind(null, 60));
+app.use(PubliclyCacheable.bind(null, 10));
 app.get(
   "/:id",
   asyncExpressHandler(async function (req, res) {
